@@ -1,25 +1,47 @@
 # Backend (Google Apps Script)
 
-This directory contains the server-side logic for the Tennis Analyzer app.
+This directory contains the server-side logic for the **Tennis Analyzer** app. It handles data processing, statistics calculation, and spreadsheet management.
 
-## Setup with CLASP
+## 📂 Source Code (`src/Code.js`)
 
-We use [CLASP](https://github.com/google/clasp) to manage the code locally.
+The main script `Code.js` contains the following key functions:
 
-### Prerequisites
-- Node.js installed
-- CLASP installed globally: `npm install -g @google/clasp`
+### ⚡ Core Triggers
+These functions are likely called by AppSheet bots or spreadsheet triggers:
+- **`onPointChange(matchIndex)`**: Recalculates statistics when point data is modified.
+- **`addNewAnalysis(user, matchIndex, ...)`**: Initializes a new analysis row when a match is created.
+- **`deleteAnalysis(matchIndex)`**: Cleans up analysis rows and point data when a match is deleted.
+- **`updateMatchInfo(...)`**: Updates metadata (players, date, tournament) for a specific match.
 
-### Initialization
-1.  Login to Google:
+### 🧮 Statistical Logic
+- **`updateStatistics(rows, matchIndex)`**: The heavy lifter. Iterates through point data to calculate:
+  - Serve percentages
+  - Break points
+  - High-pressure points
+- **`isHighPressurePoint(row)`**: Determines if a point is critical (e.g., 30-30, Deuce).
+- **`isGameOrBreakPoint(row)`**: Identifies game or break point opportunities.
+
+## 🛠️ Setup & workflows
+
+### Prerequisite
+- **Node.js** and **CLASP** installed globally.
+
+### Syncing
+This project is linked to the Apps Script project:
+- **Script ID**: `1VmWhEVY68tM_EDLlvhYDxX5PbvmzFXEdiEkkMGm3I9eP-DEia-ABLhIM`
+
+#### Commands
+1.  **Login**:
     ```bash
     clasp login
     ```
-2.  Clone the existing script (get the Script ID from Project Settings > IDs):
+2.  **Pull latest code** (if you edited in the browser):
     ```bash
-    clasp clone "YOUR_SCRIPT_ID" --rootDir ./backend/src
+    clasp pull
+    ```
+3.  **Push local changes** (after editing VS Code):
+    ```bash
+    clasp push
     ```
 
-### Workflow
-- **Pull changes**: `clasp pull`
-- **Push changes**: `clasp push`
+> **Note**: `src/appsscript.json` contains the project manifest and timezone settings.
