@@ -17,5 +17,5 @@ The frontend is built using Google AppSheet, and the backend is built using Goog
 
 ## Key Links
 - Project Website: [Tennis Analyzer](https://www.tennisanalyzer.app/). This website contains a video tutorial, FAQ document, and sample tennis match analysis reports.
-- Google Play Store: [Tennis Analyzer](https://play.google.com/store/apps/details?id=com.appsheet.whitelabel.guid_3d2e670b_8bc7_4bf0_af4a_cf4108cfc997&pli=1)
+- Google Play Store: [Tennis Analyzer](https://play.google.com/store/apps/details?id=com.appsheet.whitelabel.guid_3d2e670b_8bc7_4bf0_af4a_cf4108cfc997&pli=1). This app has been published on Google Play since August 2023.
 
