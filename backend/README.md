@@ -2,9 +2,9 @@
 
 This directory contains the server-side logic for the **Tennis Analyzer** app. It handles data processing, statistics calculation, and spreadsheet management.
 
-## 📂 Source Code (`src/Code.js`)
+## 📂 Source Code (`src/MicroStats.js`)
 
-The main script `Code.js` contains the following key functions:
+The main script `MicroStats.js` contains the following key functions:
 
 ### ⚡ Core Triggers
 These functions are likely called by AppSheet bots or spreadsheet triggers:
