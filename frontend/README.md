@@ -2,9 +2,9 @@
 
 This document outlines the front-end design and user interface structure of the Tennis Analyzer application, built on the AppSheet platform. The app is designed to track tennis match progress, record point-by-point data, and send the data to the backend. The backend performs statistical analyses and sends the results back to the frontend for display.
 
-The frontend is built using Google AppSheet, and the backend is built using Google Sheets and Google Apps Script.
+The frontend is built using Google AppSheet. Because AppSheet is a web-based, low code platform, there is no source code in this folder. The backend is built using Google Sheets and Google Apps Script (built on JavaScript).
 
-## Data Tables
+### Data Tables
 
 An AppSheet application is built on data tables. There are three data tables in this application:
 - Matches
@@ -13,7 +13,7 @@ An AppSheet application is built on data tables. There are three data tables in 
 
 ![Matches Table Screenshot](screenshots/matches_table.png)
 ![Points Table Screenshot](screenshots/points_table.png)
-![Analyses Table Screenshot](screenshots/analyses_table.png)
+![Analyses Table Screenshot](screenshots/analysis_table.png)
 
 
 ### Views
@@ -43,6 +43,6 @@ Bots are the automation that runs in the background to perform tasks. There are 
 
 ![Bots Screenshot](screenshots/bots.png)
 
-### To learn how to use this app, please visit the [project website](https://www.tennisanalyzer.app/), where you can find a video tutorial and FAQ document.
+To learn how to use this app, please visit the [project website](https://www.tennisanalyzer.app/), where you can find a video tutorial, FAQ document, and sample tennis match analysis reports.
 
 
