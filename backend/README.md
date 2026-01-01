@@ -2,6 +2,8 @@
 
 This directory contains the server-side logic for the **Tennis Analyzer** app. It handles data processing, statistics calculation, and spreadsheet management.
 
+The data sent from the front end is in the form of a point-by-point match data. This data is stored in Google Sheets, where the Google Apps Script program performs data processing and statistical calculations when triggered by changes such as addition, deletions, or edits to the match or point data.
+
 ## Source Code (`src/MicroStats.js`)
 
 The main script `MicroStats.js` contains the following key functions:
