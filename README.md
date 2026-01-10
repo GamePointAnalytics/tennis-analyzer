@@ -17,8 +17,9 @@ The frontend is built using Google AppSheet, and the backend is built using Goog
 
 ## Key Links
 
+**🌐 Project Website: [www.tennisanalyzer.app](https://www.tennisanalyzer.app/)**
+
 ### App Downloads
-- **Website**: [www.tennisanalyzer.app](https://www.tennisanalyzer.app/)
 - **Google Play Store**: [Download for Android](https://play.google.com/store/apps/details?id=com.appsheet.whitelabel.guid_3d2e670b_8bc7_4bf0_af4a_cf4108cfc997&pli=1)
 - **iOS**: [Install via AppSheet](https://www.appsheet.com/newshortcut/3d2e670b-8bc7-4bf0-af4a-cf4108cfc997)
 
