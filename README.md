@@ -44,4 +44,4 @@ The frontend is built using Google AppSheet, and the backend is built using Goog
 ### User Metrics
 - Published on Google Play since August 2023
 - Small but growing international user base
-- 50% monthly retention rate (~20 monthly active users (MAU) / ~40 installed audience)
+- 300+ downloads, 70 installed audience, and 30-40 monthly active users
