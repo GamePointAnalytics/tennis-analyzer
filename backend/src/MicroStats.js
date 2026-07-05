@@ -2,7 +2,7 @@
 // var spreadsheetID = "1ucYiMUDwdBlwKmC6VH_AOctsZrNcdnYWPm_NjcN_2LE";
 
 // For the free app
-var spreadsheetID = "1Ktk_obk5pLQxKEanp9SMkMvh1HMWx0dh0W5kBZ7tvWA";
+var spreadsheetID = "1K9altiDxgC3xIL2N8J_5ZelRJjHVKu5UBE8PdcUv-Qs";
 var spreadsheet = SpreadsheetApp.openById(spreadsheetID);
 
 // Remember to add 1 when you use the column numbers in getRange().
@@ -12,7 +12,6 @@ var secondServeOutcomeColumnNumberPoints = getColumnNumber("second serve outcome
 var serverColumnNumberPoints = getColumnNumber("server", "points");
 var player1ColumnNumberPoints = getColumnNumber("player 1", "points");
 var player2ColumnNumberPoints = getColumnNumber("player 2", "points");
-var serverColumnNumberPoints = getColumnNumber("server", "points");
 var outcomeTypeColumnNumberPoints = getColumnNumber("outcome type", "points");
 var outcomeColumnNumberPoints = getColumnNumber("outcome", "points");
 var winnerColumnNumberPoints = getColumnNumber("winner", "points");
@@ -50,22 +49,25 @@ function onPointChange(matchIndex) {
   var values = dataRange.getValues();
 
   var selectedRows = []
-  for (var i = 0; i < values.length; i++) {
+  for (var i = 1; i < values.length; i++) {
     // Find and save all the rows with the given match ID.
-    if (values[i][matchIndexColumnNumberPoints] === matchIndex) {
+    if (values[i][matchIndexColumnNumberPoints] == matchIndex) {
       selectedRows.push(values[i]);
     }
   }
 
   if (selectedRows.length > 0) {
     updateStatistics(selectedRows, matchIndex);
+  } else {
+    // All points deleted — clear stale stats from the analyses sheet
+    updateStatistics([], matchIndex);
   }
 }
 
 // When a new match is added, add a new row in the analysis sheet
-function addNewAnalysis(user, matchIndex, player1, player2, tournament, date) {
+function addNewAnalysis(user, matchIndex, player1, player2, tournament, date, adScoring) {
   var sheet = spreadsheet.getSheetByName("analyses");
-  sheet.appendRow([user, matchIndex, player1, player2, tournament, date]);
+  sheet.appendRow([user, matchIndex, player1, player2, tournament, date, adScoring]);
 }
 
 // When a match is deleted, delete the corresponding row 
@@ -81,7 +83,7 @@ function deleteAnalysis(matchIndex) {
 
   // Must loop from bottom to top because 
   // when you delete a row, the row blow it will automatically move up.
-  for (var i = values.length - 1; i >= 0; i--) {
+  for (var i = values.length - 1; i >= 1; i--) {
     if (values[i][matchIndexColumnNumberAnalysis] == matchIndex) {
       // delete the row (add 1 because arrays are zero-indexed)
       sheet.deleteRow(i + 1);
@@ -93,7 +95,7 @@ function deleteAnalysis(matchIndex) {
   values = range.getValues();
 
   // Must loop from bottom to top in this case.
-  for (var i = values.length - 1; i >= 0; i--) {
+  for (var i = values.length - 1; i >= 1; i--) {
     if (values[i][matchIndexColumnNumberPoints] == matchIndex) {
       // delete the row (add 1 because arrays are zero-indexed)
       sheet.deleteRow(i + 1);
@@ -112,6 +114,7 @@ function updateMatchInfo(matchIndex, date, player1, player2, tournament, adScori
   var player2ColumnNumberAnalysis = getColumnNumber("player2", "analyses");
   var dateColumnNumberAnalysis = getColumnNumber("date", "analyses");
   var tournamentColumnNumberAnalysis = getColumnNumber("tournament", "analyses");
+  var adScoringColumnNumberAnalysis = getColumnNumber("ad scoring", "analyses");
 
   for (var i = 0; i < values.length; i++) {
     if (values[i][matchIndexColumnNumberAnalysis] == matchIndex) {
@@ -119,6 +122,7 @@ function updateMatchInfo(matchIndex, date, player1, player2, tournament, adScori
       sheet.getRange(i + 1, player2ColumnNumberAnalysis + 1).setValue(player2);
       sheet.getRange(i + 1, dateColumnNumberAnalysis + 1).setValue(date);
       sheet.getRange(i + 1, tournamentColumnNumberAnalysis + 1).setValue(tournament);
+      sheet.getRange(i + 1, adScoringColumnNumberAnalysis + 1).setValue(adScoring);
     }
   }
 
@@ -704,13 +708,20 @@ function updateStatistics(rows, matchIndex) {
     var player1GameScore = rows[i][gameScore1PostColumnNumberPoints];
     var player2GameScore = rows[i][gameScore2PostColumnNumberPoints];
     var isEndOfSet = false;
-    if ((player1GameScore == 7) || (player2GameScore == 7)) {
-      // 7-5 or 7-6
-      isEndOfSet = true;
-    } else if ((player1GameScore == 6) || (player2GameScore == 6)) {
-      if ((player1GameScore + player2GameScore) < 11) {
-        // Covers 6-4, 6-3, etc.
+    var player1GameScorePre = rows[i][gameScore1PreColumnNumberPoints];
+    var player2GameScorePre = rows[i][gameScore2PreColumnNumberPoints];
+    // Only fire on the exact point where the game score transitions (the set-clinching point).
+    // Without this guard, isEndOfSet would be true for every point in the final game
+    // because post-game-score doesn't change mid-game.
+    if (player1GameScore != player1GameScorePre || player2GameScore != player2GameScorePre) {
+      if ((player1GameScore == 7) || (player2GameScore == 7)) {
+        // 7-5 or 7-6
         isEndOfSet = true;
+      } else if ((player1GameScore == 6) || (player2GameScore == 6)) {
+        if ((player1GameScore + player2GameScore) < 11) {
+          // Covers 6-4, 6-3, etc.
+          isEndOfSet = true;
+        }
       }
     }
 
@@ -742,7 +753,8 @@ function updateStatistics(rows, matchIndex) {
 
     // Get serve side: 1 is duece side and 2 is ad side
     var serveSide = 0;
-    if (rows[i][tiebreakColumnNumberPoints] == "no") {
+    var isTiebreakPoint = (rows[i][tiebreakColumnNumberPoints] == "7-point") || (rows[i][tiebreakColumnNumberPoints] == "10-point");
+    if (!isTiebreakPoint) {
       serveSide = getServeSide(rows[i][pointScore1PreColumnNumberPoints],
         rows[i][pointScore2PreColumnNumberPoints], false);
     } else {
@@ -1485,7 +1497,8 @@ function updateStatistics(rows, matchIndex) {
           // player1 is serving
           shortPointOnPlayer1ServeCount++;
 
-          if (rows[i][firstServeOutcomeColumnNumberPoints] == "in") {
+          if (rows[i][firstServeOutcomeColumnNumberPoints] == "in" ||
+              rows[i][firstServeOutcomeColumnNumberPoints] == "ace") {
             shortPointOnPlayer1FirstServeCount++;
           } else if (rows[i][secondServeOutcomeColumnNumberPoints] == "in") {
             shortPointOnPlayer1SecondServeCount++;
@@ -1493,7 +1506,8 @@ function updateStatistics(rows, matchIndex) {
         } else if (server == 2) {
           shortPointOnPlayer2ServeCount++;
 
-          if (rows[i][firstServeOutcomeColumnNumberPoints] == "in") {
+          if (rows[i][firstServeOutcomeColumnNumberPoints] == "in" ||
+              rows[i][firstServeOutcomeColumnNumberPoints] == "ace") {
             shortPointOnPlayer2FirstServeCount++;
           } else if (rows[i][secondServeOutcomeColumnNumberPoints] == "in") {
             shortPointOnPlayer2SecondServeCount++;
@@ -1549,7 +1563,8 @@ function updateStatistics(rows, matchIndex) {
           // player1 is serving
           longerPointOnPlayer1ServeCount++;
 
-          if (rows[i][firstServeOutcomeColumnNumberPoints] == "in") {
+          if (rows[i][firstServeOutcomeColumnNumberPoints] == "in" ||
+              rows[i][firstServeOutcomeColumnNumberPoints] == "ace") {
             longerPointOnPlayer1FirstServeCount++;
           } else if (rows[i][secondServeOutcomeColumnNumberPoints] == "in") {
             longerPointOnPlayer1SecondServeCount++;
@@ -1557,7 +1572,8 @@ function updateStatistics(rows, matchIndex) {
         } else if (server == 2) {
           longerPointOnPlayer2ServeCount++;
 
-          if (rows[i][firstServeOutcomeColumnNumberPoints] == "in") {
+          if (rows[i][firstServeOutcomeColumnNumberPoints] == "in" ||
+              rows[i][firstServeOutcomeColumnNumberPoints] == "ace") {
             longerPointOnPlayer2FirstServeCount++;
           } else if (rows[i][secondServeOutcomeColumnNumberPoints] == "in") {
             longerPointOnPlayer2SecondServeCount++;
@@ -1614,7 +1630,8 @@ function updateStatistics(rows, matchIndex) {
           // player1 is serving
           veryLongPointOnPlayer1ServeCount++;
 
-          if (rows[i][firstServeOutcomeColumnNumberPoints] == "in") {
+          if (rows[i][firstServeOutcomeColumnNumberPoints] == "in" ||
+              rows[i][firstServeOutcomeColumnNumberPoints] == "ace") {
             veryLongPointOnPlayer1FirstServeCount++;
           } else if (rows[i][secondServeOutcomeColumnNumberPoints] == "in") {
             veryLongPointOnPlayer1SecondServeCount++;
@@ -1622,7 +1639,8 @@ function updateStatistics(rows, matchIndex) {
         } else if (server == 2) {
           veryLongPointOnPlayer2ServeCount++;
 
-          if (rows[i][firstServeOutcomeColumnNumberPoints] == "in") {
+          if (rows[i][firstServeOutcomeColumnNumberPoints] == "in" ||
+              rows[i][firstServeOutcomeColumnNumberPoints] == "ace") {
             veryLongPointOnPlayer2FirstServeCount++;
           } else if (rows[i][secondServeOutcomeColumnNumberPoints] == "in") {
             veryLongPointOnPlayer2SecondServeCount++;
@@ -1966,13 +1984,13 @@ function updateStatistics(rows, matchIndex) {
           } else if (serveSide == 2) {
             player1HighPressurePointSecondServeAdWideCount++;
           }
-        } else if (rows[i][firstServeDirColumnNumberPoints] == "body") {
+        } else if (rows[i][secondServeDirColumnNumberPoints] == "body") {
           if (serveSide == 1) {
             player1HighPressurePointSecondServeDeuceBodyCount++;
           } else if (serveSide == 2) {
             player1HighPressurePointSecondServeAdBodyCount++;
           }
-        } else if (rows[i][firstServeDirColumnNumberPoints] == "t") {
+        } else if (rows[i][secondServeDirColumnNumberPoints] == "t") {
           if (serveSide == 1) {
             player1HighPressurePointSecondServeDeuceTCount++;
           } else if (serveSide == 2) {
@@ -2096,13 +2114,13 @@ function updateStatistics(rows, matchIndex) {
           } else if (serveSide == 2) {
             player2HighPressurePointSecondServeAdWideCount++;
           }
-        } else if (rows[i][firstServeDirColumnNumberPoints] == "body") {
+        } else if (rows[i][secondServeDirColumnNumberPoints] == "body") {
           if (serveSide == 1) {
             player2HighPressurePointSecondServeDeuceBodyCount++;
           } else if (serveSide == 2) {
             player2HighPressurePointSecondServeAdBodyCount++;
           }
-        } else if (rows[i][firstServeDirColumnNumberPoints] == "t") {
+        } else if (rows[i][secondServeDirColumnNumberPoints] == "t") {
           if (serveSide == 1) {
             player2HighPressurePointSecondServeDeuceTCount++;
           } else if (serveSide == 2) {
@@ -2568,11 +2586,11 @@ function updateStatistics(rows, matchIndex) {
       fillCell(sheet, i, player2ServeDirectionColumnNumberAnalysis, player2ServeDirectionString);
 
       // Construct the game point serve direction string
-      var gamePointServeDirectionString = `${player1}: game point first serve deuce side direction(wide ${player1GamePointDeuceSideFirstServeWideCount}, body ${player1GamePointDeuceSideFirstServeBodyCount}, T ${player1GamePointDeuceSideFirstServeTCount}), ad side direction(wide ${player1GamePointAdSideFirstServeWideCount}, body ${player1GamePointAdSideFirstServeTCount}, T ${player1GamePointAdSideFirstServeTCount}), game point second serve deuce side direction(wide ${player1GamePointDeuceSideSecondServeWideCount}, body ${player1GamePointDeuceSideSecondServeBodyCount}, T ${player1GamePointDeuceSideSecondServeTCount}), ad side direction(wide ${player1GamePointAdSideSecondServeWideCount}, body ${player1GamePointAdSideSecondServeBodyCount}, T ${player1GamePointAdSideSecondServeTCount})`;
+      var gamePointServeDirectionString = `${player1}: game point first serve deuce side direction(wide ${player1GamePointDeuceSideFirstServeWideCount}, body ${player1GamePointDeuceSideFirstServeBodyCount}, T ${player1GamePointDeuceSideFirstServeTCount}), ad side direction(wide ${player1GamePointAdSideFirstServeWideCount}, body ${player1GamePointAdSideFirstServeBodyCount}, T ${player1GamePointAdSideFirstServeTCount}), game point second serve deuce side direction(wide ${player1GamePointDeuceSideSecondServeWideCount}, body ${player1GamePointDeuceSideSecondServeBodyCount}, T ${player1GamePointDeuceSideSecondServeTCount}), ad side direction(wide ${player1GamePointAdSideSecondServeWideCount}, body ${player1GamePointAdSideSecondServeBodyCount}, T ${player1GamePointAdSideSecondServeTCount})`;
 
       fillCell(sheet, i, player1GamePointServeDirectionColumnAnalysis, gamePointServeDirectionString);
 
-      gamePointServeDirectionString = `${player2}: game point first serve deuce side direction(wide ${player2GamePointDeuceSideFirstServeWideCount}, body ${player2GamePointDeuceSideFirstServeBodyCount}, T ${player2GamePointDeuceSideFirstServeTCount}), ad side direction(wide ${player2GamePointAdSideFirstServeWideCount}, body ${player2GamePointAdSideFirstServeTCount}, T ${player2GamePointAdSideFirstServeTCount}), game point second serve deuce side direction(wide ${player2GamePointDeuceSideSecondServeWideCount}, body ${player2GamePointDeuceSideSecondServeBodyCount}, T ${player2GamePointDeuceSideSecondServeTCount}), ad side direction(wide ${player2GamePointAdSideSecondServeWideCount}, body ${player2GamePointAdSideSecondServeBodyCount}, T ${player2GamePointAdSideSecondServeTCount})`;
+      gamePointServeDirectionString = `${player2}: game point first serve deuce side direction(wide ${player2GamePointDeuceSideFirstServeWideCount}, body ${player2GamePointDeuceSideFirstServeBodyCount}, T ${player2GamePointDeuceSideFirstServeTCount}), ad side direction(wide ${player2GamePointAdSideFirstServeWideCount}, body ${player2GamePointAdSideFirstServeBodyCount}, T ${player2GamePointAdSideFirstServeTCount}), game point second serve deuce side direction(wide ${player2GamePointDeuceSideSecondServeWideCount}, body ${player2GamePointDeuceSideSecondServeBodyCount}, T ${player2GamePointDeuceSideSecondServeTCount}), ad side direction(wide ${player2GamePointAdSideSecondServeWideCount}, body ${player2GamePointAdSideSecondServeBodyCount}, T ${player2GamePointAdSideSecondServeTCount})`;
 
       fillCell(sheet, i, player2GamePointServeDirectionColumnAnalysis, gamePointServeDirectionString);
 
@@ -2777,7 +2795,7 @@ function updateStatistics(rows, matchIndex) {
       var highPressurePointString = `${player1}: `;
       highPressurePointString += `high-pressure points won(${player1HighPressurePointWonCount}), `;
       highPressurePointString += `won by winner and opponent forced error(${player1HighPressurePointWinnerCount}), `;
-      highPressurePointString += `won by opponent unforced error(${player2HighPressurePointWonByUnforcedErrorCount}), `
+      highPressurePointString += `won by opponent unforced error(${player1HighPressurePointWonByUnforcedErrorCount}), `
       highPressurePointString += `won on serve (${player1HighPressurePointWonOnServeCount}), `;
       highPressurePointString += `won by ace (${player1HighPressurePointAceCount}), `;
       highPressurePointString += `won by unreturnable serve (${player1HighPressurePointWonByUnreturnableServeCount}), `;
@@ -3023,10 +3041,10 @@ function isHighPressurePoint(row) {
   var isTiebreak = false;
   var tbPressureScore = 0;
   if (row[tiebreakColumnNumberPoints] == "7-point") {
-    tiebreak = true;
+    isTiebreak = true;
     tbPressureScore = 5;
   } else if (row[tiebreakColumnNumberPoints] == "10-point") {
-    tiebreak = true;
+    isTiebreak = true;
     tbPressureScore = 8;
   }
 
@@ -3058,8 +3076,6 @@ function isHighPressurePoint(row) {
 
     return result;
   }
-
-  return 0;
 }
 
 // Return: -2 (player2 break point), -1 (player1 break point), 0 (not game or break point), 
@@ -3183,4 +3199,165 @@ function getServeSide(player1PointScore, player2PointScore, isTiebreak) {
   }
 }
 
+// ==========================================
+// NEW: Web App Endpoint for Native App Sync
+// ==========================================
+
+function doPost(e) {
+  try {
+    var payload = JSON.parse(e.postData.contents);
+    var action = payload.action;
+    var result = { status: "success" };
+
+    switch (action) {
+      case "syncMatch":
+        result.data = handleSyncMatch(payload.match);
+        break;
+      case "syncPoints":
+        result.data = handleSyncPoints(payload.matchIndex, payload.points);
+        break;
+      case "deleteMatch":
+        deleteAnalysis(payload.matchIndex);
+        break;
+      case "getAnalysis":
+        result.data = handleGetAnalysis(payload.matchIndex);
+        break;
+      case "getMatchesByUser":
+        result.data = handleGetMatchesByUser(payload.userId);
+        break;
+      default:
+        result = { status: "error", message: "Unknown action: " + action };
+    }
+
+    return ContentService.createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// Helper: Upsert match metadata
+function handleSyncMatch(match) {
+  var sheet = spreadsheet.getSheetByName("analyses");
+  var range = sheet.getDataRange();
+  var values = range.getValues();
+  var matchIndexCol = getColumnNumber("match index", "analyses");
+  
+  var foundRowIndex = -1;
+  for (var i = 0; i < values.length; i++) {
+    if (values[i][matchIndexCol] == match.matchIndex) {
+      foundRowIndex = i + 1;
+      break;
+    }
+  }
+  
+  if (foundRowIndex === -1) {
+    addNewAnalysis(match.user, match.matchIndex, match.player1, match.player2, match.tournament, match.date, match.adScoring);
+  } else {
+    updateMatchInfo(match.matchIndex, match.date, match.player1, match.player2, match.tournament, match.adScoring);
+  }
+  return { matchIndex: match.matchIndex };
+}
+
+// Helper: Overwrite all points for a match and recalculate
+function handleSyncPoints(matchIndex, pointsList) {
+  var sheet = spreadsheet.getSheetByName("points");
+  var range = sheet.getDataRange();
+  var values = range.getValues();
+  var matchIndexCol = getColumnNumber("match index", "points");
+  
+  // 1. Delete existing points for this match
+  for (var i = values.length - 1; i >= 0; i--) {
+    if (values[i][matchIndexCol] == matchIndex) {
+      sheet.deleteRow(i + 1);
+    }
+  }
+  
+  // 2. Append new points list
+  if (pointsList && pointsList.length > 0) {
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    
+    // Map JSON points key-values to column index order
+    var rowsToAppend = pointsList.map(function(pt) {
+      var row = [];
+      for (var col = 0; col < headers.length; col++) {
+        var columnName = headers[col];
+        row.push(pt[columnName] !== undefined ? pt[columnName] : "");
+      }
+      return row;
+    });
+    
+    sheet.getRange(sheet.getLastRow() + 1, 1, rowsToAppend.length, headers.length).setValues(rowsToAppend);
+  }
+  
+  // 3. Trigger recalculation
+  onPointChange(matchIndex);
+  return { pointCount: pointsList ? pointsList.length : 0 };
+}
+
+// Helper: Retrieve pre-formatted analysis strings for display
+function handleGetAnalysis(matchIndex) {
+  var sheet = spreadsheet.getSheetByName("analyses");
+  var range = sheet.getDataRange();
+  var values = range.getValues();
+  var headers = values[0]; // reuse already-fetched data; don't call getValues() again
+  var matchIndexCol = getColumnNumber("match index", "analyses");
+  
+  for (var i = 1; i < values.length; i++) {
+    if (values[i][matchIndexCol] == matchIndex) {
+      var rowData = {};
+      for (var col = 0; col < headers.length; col++) {
+        rowData[headers[col]] = values[i][col];
+      }
+      return rowData;
+    }
+  }
+  return null;
+}
+// Helper: Return all matches (with embedded points) for a given user ID
+function handleGetMatchesByUser(userId) {
+  // 1. Scan analyses sheet for rows belonging to this user
+  var analysesSheet = spreadsheet.getSheetByName("analyses");
+  var analysesValues = analysesSheet.getDataRange().getValues();
+  var analysesHeaders = analysesValues[0];
+  var userColIdx = analysesHeaders.indexOf("user");
+  var miColIdx   = analysesHeaders.indexOf("match index");
+
+  var matches   = [];
+  var miToIdx   = {}; // matchIndex string -> position in matches array
+
+  for (var i = 1; i < analysesValues.length; i++) {
+    if (String(analysesValues[i][userColIdx]) === String(userId)) {
+      var matchObj = {};
+      for (var col = 0; col < analysesHeaders.length; col++) {
+        matchObj[analysesHeaders[col]] = analysesValues[i][col];
+      }
+      matchObj.points = [];
+      miToIdx[String(analysesValues[i][miColIdx])] = matches.length;
+      matches.push(matchObj);
+    }
+  }
+
+  if (matches.length === 0) return [];
+
+  // 2. Single scan of points sheet — attach rows to their parent match
+  var pointsSheet  = spreadsheet.getSheetByName("points");
+  var pointsValues = pointsSheet.getDataRange().getValues();
+  var pointsHeaders = pointsValues[0];
+  var miColPts = pointsHeaders.indexOf("match index");
+
+  for (var j = 1; j < pointsValues.length; j++) {
+    var mi = String(pointsValues[j][miColPts]);
+    if (miToIdx.hasOwnProperty(mi)) {
+      var ptObj = {};
+      for (var col = 0; col < pointsHeaders.length; col++) {
+        ptObj[pointsHeaders[col]] = pointsValues[j][col];
+      }
+      matches[miToIdx[mi]].points.push(ptObj);
+    }
+  }
+
+  return matches;
+}
 

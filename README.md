@@ -42,6 +42,88 @@ The frontend is built using Google AppSheet, and the backend is built using Goog
 - **[Mackenzie McDonald vs Yannick Hanfmann](https://drive.google.com/file/d/1hfnaGkuQXVZwtP6AM16P4Xt4PuPkJy_z/view?usp=sharing)** (2015 NCAA, UCLA vs USC) - [Video](https://www.youtube.com/watch?v=eVN2s3fvjfY)
 
 ### User Metrics
-- Published on Google Play since August 2023
-- Small but growing international user base
-- 300+ downloads, 70 installed audience, and 30-40 monthly active users
+- 300+ downloads, 70 installed audience, and 30-40 monthly active users (50% monthly retention rate)
+
+---
+
+## Development (React Native / Expo)
+
+The native mobile app lives in `frontend-native/`. It is built with **Expo SDK 56** and
+**React Native**, and packaged into a standalone APK using the Android Gradle build system.
+
+### Prerequisites
+
+| Tool | Notes |
+|---|---|
+| Node.js | v18 or later |
+| Java JDK | v17 recommended (check with `java -version`) |
+| Android SDK | Installed via Android Studio |
+| ADB | Bundled with Android SDK; ensure it is on your PATH |
+| USB debugging | Enabled on your Android phone |
+
+### Build a release APK (local, unsigned-but-aligned)
+
+```powershell
+# 1. Navigate to the native app folder
+cd frontend-native
+
+# 2. Install Node dependencies (only needed after cloning or npm install changes)
+npm install
+
+# 3. Generate the release APK
+.\gradlew assembleRelease
+```
+
+The APK is written to:
+```
+frontend-native\app\build\outputs\apk\release\app-release.apk
+```
+
+Build time is typically 2–5 minutes. Subsequent builds are faster due to Gradle's incremental cache.
+
+### Install the APK on your phone
+
+```powershell
+# Connect your phone via USB, then from the frontend-native folder:
+adb install -r app\build\outputs\apk\release\app-release.apk
+```
+
+- `-r` = **replace** (reinstall over existing version, preserving local data)
+- Omit `-r` for a completely fresh install (wipes local SQLite data)
+- Run `adb devices` first to confirm your phone is recognized
+
+### Change the app name
+
+The display name shown on the home screen is set in:
+```
+frontend-native\app.json  →  "name" and "displayName" fields
+```
+After changing, rebuild with `.\gradlew assembleRelease`.
+
+### Check for syntax errors
+
+```powershell
+# Check a single file
+node --check src\screens\AnalysisScreen.js
+
+# Check all JS files under src\
+Get-ChildItem -Recurse -Filter "*.js" src | ForEach-Object {
+    $r = node --check $_.FullName 2>&1
+    if ($LASTEXITCODE -ne 0) { Write-Host "FAIL: $($_.Name) — $r" }
+}
+Write-Host "Done"
+```
+
+### Backend (Google Apps Script)
+
+The backend lives in `backend/src/MicroStats.js`. It runs entirely inside Google Sheets
+as a Google Apps Script web app. To deploy updates:
+
+1. Open the Google Sheet → **Extensions → Apps Script**
+2. Copy the contents of `backend/src/MicroStats.js` into the editor (replace existing)
+3. Click **Deploy → Manage Deployments → Edit (pencil icon)**
+4. Bump the version, click **Deploy**
+5. Copy the new Web App URL if it changed and update the app's settings screen
+
+To verify the deployed version matches your local file, search for a unique string
+(e.g. `doPost`) in the Apps Script editor — if not found, the old version is deployed.
