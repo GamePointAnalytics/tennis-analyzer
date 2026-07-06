@@ -11,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system';
 import HapticButton from '../components/HapticButton';
 import Card from '../components/Card';
 import { getMatch } from '../database/db';
@@ -144,6 +145,72 @@ const extractHeadlinePct = (raw) => {
   // Match "(N%)" or "(N %)"
   const m = str.match(/\((\d+)\s*%/);
   return m ? `${m[1]}%` : '';
+};
+
+/**
+ * Extract the Nth percentage match from a raw string (0-indexed).
+ * Useful when the backend merges both players' data into one field.
+ * e.g. idx=1 returns the second "(N%)" found in the string.
+ */
+const extractNthPct = (raw, idx) => {
+  const str = stripHtml(raw);
+  if (!str) return '';
+  const matches = [...str.matchAll(/\((\d+)\s*%/g)];
+  return (matches[idx]) ? `${matches[idx][1]}%` : '';
+};
+
+/**
+ * Extract the Nth headline number from a raw string (0-indexed).
+ */
+const extractNthNumber = (raw, idx) => {
+  const str = stripHtml(raw);
+  if (!str) return '';
+  const matches = [...str.matchAll(/\(([^)]*)/g)];
+  let found = 0;
+  for (const m of matches) {
+    const inner = m[1].trim();
+    if (/^[\d+\-]+\s+\w/.test(inner)) continue;
+    const numMatch = inner.match(/^(\d+)/);
+    if (numMatch) {
+      if (found === idx) return numMatch[1];
+      found++;
+    }
+  }
+  return '';
+};
+
+/**
+ * Extract a percentage for a player, with fallback to the combined field.
+ * If raw2 has data, extract from it. Otherwise try the 2nd pct in raw1.
+ */
+const extractPctWithFallback = (raw1, raw2) => {
+  const direct = extractHeadlinePct(raw2);
+  if (direct) return direct;
+  // Fallback: try 2nd percentage in raw1 (both players merged into one field)
+  return extractNthPct(raw1, 1);
+};
+
+/**
+ * Extract a headline number for a player, with fallback to the combined field.
+ */
+const extractNumWithFallback = (raw1, raw2) => {
+  const direct = extractHeadlineNumber(raw2);
+  if (direct) return direct;
+  return extractNthNumber(raw1, 1);
+};
+
+/**
+ * Format a raw date string (e.g. "2023-07-08T04:00:00.000Z") into a
+ * human-friendly form (e.g. "8 Jul 2023"). Falls back to the raw string
+ * if the value isn't a parseable date.
+ */
+const formatMatchDate = (raw) => {
+  if (!raw) return '';
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return raw;
+  return d.toLocaleDateString('en-GB', {
+    year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC',
+  });
 };
 
 export default function AnalysisScreen({ route, navigation }) {
@@ -398,17 +465,33 @@ export default function AnalysisScreen({ route, navigation }) {
     }
 
     try {
-      // 1. Render the HTML report to a PDF file on-device
-      const { uri } = await Print.printToFileAsync({
+      // 1. Render the HTML report to a temporary PDF file
+      const { uri: tmpUri } = await Print.printToFileAsync({
         html: formatReportAsHtml(),
         base64: false,
       });
 
-      // 2. Open the native share sheet — user can send via Gmail (as attachment),
-      //    WhatsApp, save to Google Drive, etc.
+      // 2. Rename to a meaningful filename: Player1_vs_Player2_YYYY-MM-DD.pdf
+      //    Fall back to tmpUri if the rename step fails.
+      let shareUri = tmpUri;
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        const safeName = (s) => (s || '').trim().replace(/\s+/g, '_').replace(/[^\w-]/g, '');
+        const filename = `${safeName(match.player1)}_vs_${safeName(match.player2)}_${today}.pdf`;
+        // Build the destination in the same directory as the temp file
+        const dir = tmpUri.substring(0, tmpUri.lastIndexOf('/') + 1);
+        const namedUri = dir + filename;
+        await FileSystem.moveAsync({ from: tmpUri, to: namedUri });
+        shareUri = namedUri;
+      } catch (renameErr) {
+        console.warn('PDF rename failed, using temp URI:', renameErr);
+        // Rename failed — use original tmpUri, PDF still shares fine
+      }
+
+      // 3. Open the native share sheet — Gmail (as attachment), WhatsApp, Drive, etc.
       const canShare = await Sharing.isAvailableAsync();
       if (canShare) {
-        await Sharing.shareAsync(uri, {
+        await Sharing.shareAsync(shareUri, {
           mimeType: 'application/pdf',
           dialogTitle: 'Share Analysis Report',
           UTI: 'com.adobe.pdf',
@@ -582,7 +665,7 @@ export default function AnalysisScreen({ route, navigation }) {
             {match.player1} vs {match.player2}
           </Text>
           <Text style={styles.matchMetaSub}>
-            {match.tournament ? `${match.tournament} • ` : ''}{match.date}
+            {match.tournament ? `${match.tournament} • ` : ''}{formatMatchDate(match.date)}
           </Text>
         </View>
 
@@ -619,12 +702,12 @@ export default function AnalysisScreen({ route, navigation }) {
               {renderCompareRow(
                 'Points Won',
                 extractHeadlineNumber(analysis.points_won1),
-                extractHeadlineNumber(analysis.points_won2)
+                extractNumWithFallback(analysis.points_won1, analysis.points_won2)
               )}
               {renderCompareRow(
                 'Points Lost',
                 extractHeadlineNumber(analysis.points_lost1),
-                extractHeadlineNumber(analysis.points_lost2)
+                extractNumWithFallback(analysis.points_lost1, analysis.points_lost2)
               )}
 
               {/* Detailed breakdown: stacked */}
@@ -657,22 +740,22 @@ export default function AnalysisScreen({ route, navigation }) {
               {renderCompareRow(
                 '1st Serve In %',
                 extractHeadlinePct(analysis.first_srv_pct1),
-                extractHeadlinePct(analysis.first_srv_pct2)
+                extractPctWithFallback(analysis.first_srv_pct1, analysis.first_srv_pct2)
               )}
               {renderCompareRow(
                 '1st Srv Won %',
                 extractHeadlinePct(analysis.first_srv_won_pct1),
-                extractHeadlinePct(analysis.first_srv_won_pct2)
+                extractPctWithFallback(analysis.first_srv_won_pct1, analysis.first_srv_won_pct2)
               )}
               {renderCompareRow(
                 'Aces',
                 extractHeadlineNumber(analysis.ace_count1),
-                extractHeadlineNumber(analysis.ace_count2)
+                extractNumWithFallback(analysis.ace_count1, analysis.ace_count2)
               )}
               {renderCompareRow(
                 'Double Faults',
                 extractHeadlineNumber(analysis.double_fault1),
-                extractHeadlineNumber(analysis.double_fault2)
+                extractNumWithFallback(analysis.double_fault1, analysis.double_fault2)
               )}
 
               {/* Detailed breakdowns: stacked */}

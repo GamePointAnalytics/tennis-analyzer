@@ -5,6 +5,7 @@ import {
   markPointsSynced,
   getMatchIndexes,
   importCloudMatch,
+  deleteSyncedMatchesNotOwnedBy,
 } from '../database/db';
 import { syncMatchToCloud, syncPointsToCloud, fetchMatchesFromCloud } from './api';
 import { getSettings } from './settings';
@@ -54,6 +55,11 @@ export async function syncPendingData() {
       const userId = settings.userId;
 
       if (userId) {
+        // ── Clean up: remove cloud-imported matches from a different user ──
+        // This handles the case where the user changed their User ID in Settings.
+        // Locally-created ('pending') matches are never deleted — only 'synced' ones.
+        await deleteSyncedMatchesNotOwnedBy(userId);
+
         const cloudMatches = await fetchMatchesFromCloud(userId);
 
         if (Array.isArray(cloudMatches) && cloudMatches.length > 0) {

@@ -190,7 +190,7 @@ export async function initializeDb() {
         "INSERT OR REPLACE INTO migrations (name, completedAt) VALUES ('delete_synced_for_reimport_v1', ?)",
         [new Date().toISOString()]
       );
-      console.log('[Migration] Cleared synced imports — will re-import from cloud on next sync');
+      // Migration complete — synced imports cleared for re-import on next sync
     } catch (err) {
       console.warn('[Migration] delete_synced_for_reimport_v1 failed:', err.message);
     }
@@ -393,6 +393,23 @@ export async function getMatchIndexes() {
   const database = await initializeDb();
   const rows = await database.getAllAsync('SELECT matchIndex FROM matches');
   return new Set(rows.map(r => r.matchIndex));
+}
+
+// Delete all synced (cloud-imported) matches whose `user` column doesn't match
+// the current userId. Locally-created matches (syncStatus='pending') are kept
+// regardless — they haven't been pushed yet and may still need uploading.
+export async function deleteSyncedMatchesNotOwnedBy(userId) {
+  const database = await initializeDb();
+  // Points cascade-delete automatically thanks to FOREIGN KEY … ON DELETE CASCADE
+  const result = await database.runAsync(
+    "DELETE FROM matches WHERE syncStatus = 'synced' AND user != ?",
+    [userId]
+  );
+  // Also clear analysis cache for removed matches
+  await database.runAsync(
+    "DELETE FROM analyses_cache WHERE matchIndex NOT IN (SELECT matchIndex FROM matches)"
+  );
+  return result.changes || 0;
 }
 
 // Import a single match (with its points) received from the cloud pull.

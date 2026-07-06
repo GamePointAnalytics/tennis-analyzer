@@ -14,7 +14,6 @@ import HapticButton from '../components/HapticButton';
 import Card from '../components/Card';
 import { getMatch, getPoints } from '../database/db';
 import { syncPendingData } from '../utils/syncManager';
-import { calculateScores } from '../utils/scoreCalculator';
 
 export default function MatchDetailScreen({ route, navigation }) {
   const { matchIndex } = route.params;
@@ -90,9 +89,11 @@ export default function MatchDetailScreen({ route, navigation }) {
     );
   }
 
-  // Determine current live score using the score engine.
-  // Always recompute from scratch — the stored post-scores from cloud imports
-  // are unreliable (set score is never incremented in the source spreadsheet).
+  // Determine current score from the stored post-scores of the last charted point.
+  // We always use stored post-scores rather than recalculating from scratch, because
+  // users may skip points during charting and resume with manually-set pre-scores.
+  // The calculator can't handle these gaps — it assumes continuous point-by-point
+  // progression. The stored post-scores are computed at save time and are always correct.
   let set1 = 0;
   let set2 = 0;
   let game1 = 0;
@@ -102,45 +103,29 @@ export default function MatchDetailScreen({ route, navigation }) {
 
   if (points.length > 0) {
     const lastPt = points[points.length - 1];
-    const hasWinnerData = points.some(pt => pt.winner === 'player1' || pt.winner === 'player2');
+    set1   = lastPt.setScore1Post  ?? 0;
+    set2   = lastPt.setScore2Post  ?? 0;
+    game1  = lastPt.gameScore1Post ?? 0;
+    game2  = lastPt.gameScore2Post ?? 0;
+    const ps1 = lastPt.pointScore1Post ?? '0';
+    const ps2 = lastPt.pointScore2Post ?? '0';
+    pointScore = `${ps1}-${ps2}`;
 
-    if (hasWinnerData) {
-      // Append dummy point so the calculator returns the state AFTER the last real point.
-      // The matchEnded guard in calculateScores stamps frozen final-state scores on the
-      // dummy when the match is over (best-of-5), preventing phantom game scores.
-      const allPoints = [...points, { winner: 'player1', tiebreakType: lastPt.tiebreakType || '7' }];
-      const calculated = calculateScores(allPoints, 'player1', match.adScoring);
-      const lastCalc = calculated[calculated.length - 1];
-
-      set1  = lastCalc.setScore1Pre;
-      set2  = lastCalc.setScore2Pre;
-      game1 = lastCalc.gameScore1Pre;
-      game2 = lastCalc.gameScore2Pre;
-
-      // Detect match over: use the calculator's explicit matchEnded flag.
-      // This definitively detects best-of-5 completion (3+ sets won).
-      // For best-of-3 matches (2 sets won), the calculator doesn't fire matchEnded
-      // (since setsToWin=3), so the scoreboard will show game/point scores for the
-      // "next" game. This is a minor cosmetic issue but never shows incorrect data.
-      // A match format field would be needed to detect best-of-3 completion here.
-      matchOver = lastCalc.matchEnded === true;
-
-      if (!matchOver) {
-        if (lastCalc.tiebreak === 'true') {
-          pointScore = `${lastCalc.tiebreakScore1Pre}-${lastCalc.tiebreakScore2Pre}`;
-        } else {
-          pointScore = `${lastCalc.pointScore1Pre}-${lastCalc.pointScore2Pre}`;
-        }
-      }
-    } else {
-      // Fallback: no winner data, use stored post-scores
-      set1   = lastPt.setScore1Post  ?? 0;
-      set2   = lastPt.setScore2Post  ?? 0;
-      game1  = lastPt.gameScore1Post ?? 0;
-      game2  = lastPt.gameScore2Post ?? 0;
-      const ps1 = lastPt.pointScore1Post ?? '0';
-      const ps2 = lastPt.pointScore2Post ?? '0';
-      pointScore = `${ps1}-${ps2}`;
+    // Detect completed sets that the stored data didn't account for.
+    // Some data sources track game scores within a set but don't auto-increment
+    // the set counter when a set-winning game is reached. Fix it here.
+    const setWonByP1 = (game1 >= 6 && (game1 - game2) >= 2) || (game1 === 7 && game2 === 6);
+    const setWonByP2 = (game2 >= 6 && (game2 - game1) >= 2) || (game2 === 7 && game1 === 6);
+    if (setWonByP1) {
+      set1++;
+      game1 = 0;
+      game2 = 0;
+      pointScore = '0-0';
+    } else if (setWonByP2) {
+      set2++;
+      game1 = 0;
+      game2 = 0;
+      pointScore = '0-0';
     }
   }
 

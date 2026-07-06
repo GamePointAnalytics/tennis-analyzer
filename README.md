@@ -81,6 +81,15 @@ frontend-native\app\build\outputs\apk\release\app-release.apk
 
 Build time is typically 2–5 minutes. Subsequent builds are faster due to Gradle's incremental cache.
 
+> [!WARNING]
+> If you run `npx expo prebuild --clean` (e.g. to update icons or change the package name),
+> it wipes the entire `android/` folder including `local.properties`. You must recreate it:
+> ```
+> # android/local.properties
+> sdk.dir=C\:\\Users\\yingz\\AppData\\Local\\Android\\Sdk
+> ```
+> Without this file, the Gradle build will fail with **"SDK location not found"**.
+
 ### Install the APK on your phone
 
 ```powershell
@@ -127,3 +136,68 @@ as a Google Apps Script web app. To deploy updates:
 
 To verify the deployed version matches your local file, search for a unique string
 (e.g. `doPost`) in the Apps Script editor — if not found, the old version is deployed.
+
+---
+
+## Troubleshooting
+
+### "SDK location not found"
+
+Caused by a missing `android/local.properties` file (wiped by `npx expo prebuild --clean`).
+
+**Fix:** Recreate the file:
+```powershell
+Set-Content frontend-native\android\local.properties "sdk.dir=C\:\\Users\\yingz\\AppData\\Local\\Android\\Sdk"
+```
+
+### "Gradle requires JVM 17 or later"
+
+Your system default Java is too old. Android Studio bundles JDK 21.
+
+**Fix:** Set `JAVA_HOME` permanently (run PowerShell as Administrator, one-time):
+```powershell
+[System.Environment]::SetEnvironmentVariable("JAVA_HOME", "C:\Program Files\Android\Android Studio\jbr", "Machine")
+```
+Then close and reopen your terminal.
+
+### "Filename longer than 260 characters" (CMake / Ninja)
+
+Windows has a 260-character path limit. CMake and Ninja enforce this regardless of the
+`LongPathsEnabled` registry setting. If your project path is deep, C++ compilation fails.
+
+**Fix:** Keep the project in a short root path like `C:\dev\tennis-analyzer\`.
+
+### After moving the project to a new folder
+
+If you move (or clone) the project to a different directory, the build will fail because
+Gradle, CMake, and node_modules all cache absolute paths from the old location.
+
+**Fix — full clean rebuild from the new location:**
+```powershell
+cd C:\dev\tennis-analyzer\frontend-native
+
+# 1. Reinstall all npm packages (resolves paths to the new location)
+Remove-Item -Recurse -Force node_modules
+npm install
+
+# 2. Regenerate the entire android/ folder
+npx expo prebuild --platform android --clean
+
+# 3. Recreate local.properties (always wiped by prebuild --clean)
+Set-Content android\local.properties "sdk.dir=C\:\\Users\\yingz\\AppData\\Local\\Android\\Sdk"
+
+# 4. Build
+cd android
+.\gradlew assembleRelease
+```
+
+> [!IMPORTANT]
+> You must do ALL four steps. Skipping any one of them will leave stale paths from the
+> old location cached in `node_modules`, `android/app/.cxx`, or `.gradle` build artifacts.
+
+### After running `npx expo prebuild --clean`
+
+This command wipes and regenerates the entire `android/` folder. You must:
+1. Recreate `android/local.properties` (see above)
+2. Run `.\gradlew clean assembleRelease` (the C++ cache in `.cxx` is also wiped,
+   so the first rebuild is slower — about 5–10 minutes)

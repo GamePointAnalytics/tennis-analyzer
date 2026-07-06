@@ -81,7 +81,12 @@ export default function MatchesScreen({ navigation }) {
 
   const renderMatchItem = ({ item }) => {
     const isSynced = item.syncStatus === 'synced';
-    const formattedDate = item.date ? item.date : 'Unknown date';
+    const formattedDate = (() => {
+      if (!item.date) return 'Unknown date';
+      const d = new Date(item.date);
+      if (isNaN(d.getTime())) return item.date;
+      return d.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
+    })();
 
     return (
       <Card style={styles.card}>
