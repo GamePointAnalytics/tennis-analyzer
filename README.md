@@ -4,16 +4,15 @@ Tennis Analyzer is a micro-level tennis performance analysis mobile app. Use thi
 
 This app may be used simply as a score tracker. However, to generate detailed statistical analysis, the user must enter information such as serve direction, shot count, last shot type, and shot result on a point by point basis. Therefore, this app requires a high level of concentration during the match. 
 
-The frontend is built using Google AppSheet, and the backend is built using Google Sheets and Google Apps Script.
+The frontend is a native mobile app built using React Native and Expo, and the backend is built using Google Sheets and Google Apps Script.
 
 ## Repository Structure
 
 - **`backend/`**: Server-side logic.
   - Core File: `src/MicroStats.js` 
   - Handles data processing and statistical calculations.
-- **`frontend/`**: Frontend design.
-  - Since AppSheet is a web-based, low code platform, there is no source code in this folder.
-  - Screenshots of AppSheet design.
+- **`frontend-native/`**: React Native mobile application.
+  - Built with Expo, SQLite local cache, and native UI elements.
 
 ## Key Links
 
@@ -21,7 +20,6 @@ The frontend is built using Google AppSheet, and the backend is built using Goog
 
 ### App Downloads
 - **Google Play Store**: [Download for Android](https://play.google.com/store/apps/details?id=com.appsheet.whitelabel.guid_3d2e670b_8bc7_4bf0_af4a_cf4108cfc997&pli=1)
-- **iOS**: [Install via AppSheet](https://www.appsheet.com/newshortcut/3d2e670b-8bc7-4bf0-af4a-cf4108cfc997)
 
 ### Documentation & Tutorials
 - **[FAQ Document](https://drive.google.com/file/d/1ksvGkEp_h0D6yQCXZMD_n9KelNtJHkeT/view?usp=sharing)** - Frequently Asked Questions
