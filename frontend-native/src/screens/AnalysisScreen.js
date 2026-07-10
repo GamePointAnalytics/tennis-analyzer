@@ -328,8 +328,8 @@ export default function AnalysisScreen({ route, navigation }) {
         if (!item.label && !item.value) continue;
         rows += `
           <tr>
-            <td style="padding:5px 12px 5px 0;color:${colors.label};font-size:13px;width:60%;vertical-align:top;">${item.label}</td>
-            <td style="padding:5px 0;color:${colors.value};font-size:13px;font-weight:600;text-align:right;white-space:nowrap;">${item.value}</td>
+            <td style="padding:5px 12px 5px 0;color:${colors.label};font-size:13px;width:65%;vertical-align:top;word-break:break-word;">${item.label}</td>
+            <td style="padding:5px 0;color:${colors.value};font-size:13px;font-weight:600;text-align:right;width:35%;vertical-align:top;word-break:break-word;">${item.value}</td>
           </tr>`;
       }
       if (!rows) return '';
