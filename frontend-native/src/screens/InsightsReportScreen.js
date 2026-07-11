@@ -707,22 +707,27 @@ function buildReportHtml(insights, llmText, mode, subjectName, matches) {
     .join('');
 
   const q1 = insights.q1_serve_patterns;
+  // Bug fix D: guard against missing sequence object
+  const seq = q1.sequence || {};
   const seqHtml = `
     <div style="font-size:11px; margin-top:8px; line-height: 1.6; font-family:monospace; background:#f8fafc; padding:8px; border-radius:6px; border:1px solid #e2e8f0;">
       <b>Serve sequences (W/B/T by point):</b><br>
-      1st · Deuce: ${esc(q1.sequence.firstDeuce || '—')}<br>
-      1st · Ad:    ${esc(q1.sequence.firstAd || '—')}<br>
-      2nd · Deuce: ${esc(q1.sequence.secondDeuce || '—')}<br>
-      2nd · Ad:    ${esc(q1.sequence.secondAd || '—')}
+      1st · Deuce: ${esc(seq.firstDeuce || '—')}<br>
+      1st · Ad:    ${esc(seq.firstAd || '—')}<br>
+      2nd · Deuce: ${esc(seq.secondDeuce || '—')}<br>
+      2nd · Ad:    ${esc(seq.secondAd || '—')}
     </div>
   `;
 
   const buildTagListHtml = (strengths, weaknesses) => {
-    if (!strengths.length && !weaknesses.length) {
+    // Bug fix C: guard against undefined arrays from the backend
+    const s = strengths || [];
+    const w = weaknesses || [];
+    if (!s.length && !w.length) {
       return `<div class="thin-txt">No standout strengths or weaknesses met the sample-size threshold.</div>`;
     }
-    const strHtml = strengths.map(s => `<div class="tag str">▲ <b>${esc(s.label)}.</b> ${esc(s.evidence)}</div>`).join('');
-    const weakHtml = weaknesses.map(w => `<div class="tag weak">▼ <b>${esc(w.label)}.</b> ${esc(w.evidence)}</div>`).join('');
+    const strHtml = s.map(item => `<div class="tag str">▲ <b>${esc(item.label)}.</b> ${esc(item.evidence)}</div>`).join('');
+    const weakHtml = w.map(item => `<div class="tag weak">▼ <b>${esc(item.label)}.</b> ${esc(item.evidence)}</div>`).join('');
     return `<div class="tag-list">${strHtml}${weakHtml}</div>`;
   };
 
@@ -784,15 +789,20 @@ function buildReportHtml(insights, llmText, mode, subjectName, matches) {
     ` : ''}
   `;
 
-  const buckets = (insights.q5_timeseries.buckets || []).filter((b) => !b.isSetMarker);
+  // Bug fix A: null-guard q5_timeseries before accessing .buckets
+  const buckets = ((insights.q5_timeseries && insights.q5_timeseries.buckets) || []).filter((b) => !b.isSetMarker);
   const maxAbs = Math.max(1, ...buckets.map((b) => Math.abs(b.diff || 0)));
   const momentum = buckets.map((b) => {
     const h = Math.round((Math.abs(b.diff || 0) / maxAbs) * 40);
-    const pos = (b.diff || 0) >= 0;
-    return `<div class="mcol"><div class="mtop">${pos ? `<div class="mbar pos" style="height:${h}px"></div>` : ''}</div><div class="mline"></div><div class="mbot">${!pos ? `<div class="mbar neg" style="height:${h}px"></div>` : ''}</div><div class="mlab">${esc(b.label).replace('G','')}</div></div>`;
+    // Bug fix B: diff===0 is neutral — show no bar on either side
+    const diff = b.diff || 0;
+    const pos = diff > 0;
+    const neg = diff < 0;
+    return `<div class="mcol"><div class="mtop">${pos ? `<div class="mbar pos" style="height:${h}px"></div>` : ''}</div><div class="mline"></div><div class="mbot">${neg ? `<div class="mbar neg" style="height:${h}px"></div>` : ''}</div><div class="mlab">${esc(b.label).replace('G','')}</div></div>`;
   }).join('');
 
-  const ts = insights.q5_timeseries;
+  // Bug fix A (continued): use empty fallback if q5_timeseries is missing
+  const ts = insights.q5_timeseries || { consistency: { sufficient: false, label: 'No data' }, stretches: [] };
   const consistencyHtml = `
     ${ts.consistency.sufficient ? `
       <div class="assess-box">
@@ -998,7 +1008,7 @@ const styles = StyleSheet.create({
   // shot bars
   shotRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 3, gap: 8 },
   shotLabel: { width: 76, fontSize: 11, color: '#374151', textTransform: 'capitalize' },
-  shotBarTrack: { flex: 1, height: 8, backgroundColor: '#F3F4F6', borderRadius: 4, flexDirection: 'row' },
+  shotBarTrack: { flex: 1, height: 8, backgroundColor: '#F3F4F6', borderRadius: 4, flexDirection: 'row', overflow: 'hidden' },
   shotBarFill: { height: 8, borderRadius: 4 },
   shotN: { width: 64, fontSize: 10, color: '#6B7280', textAlign: 'right' },
   // tags
