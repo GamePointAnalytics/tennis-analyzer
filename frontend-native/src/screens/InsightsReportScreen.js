@@ -273,8 +273,9 @@ export default function InsightsReportScreen({ route, navigation }) {
             </Section>
 
             <Section title="5 · Momentum & Consistency" open={expanded.q5} onToggle={() => toggle('q5')}>
-              <MomentumChart buckets={insights.q5_timeseries.buckets} />
-              <ConsistencyBlock ts={insights.q5_timeseries} />
+              {insights.q5_timeseries && insights.q5_timeseries.buckets
+                ? <><MomentumChart buckets={insights.q5_timeseries.buckets} /><ConsistencyBlock ts={insights.q5_timeseries} /></>
+                : <Text style={styles.thinText}>No time-series data available.</Text>}
             </Section>
 
             <Section title="6 · Clutch Performance" open={expanded.q6} onToggle={() => toggle('q6')}>
@@ -484,7 +485,9 @@ function MomentumChart({ buckets }) {
         {data.map((b, i) => {
           const diff = b.diff || 0;
           const h = Math.round((Math.abs(diff) / maxAbs) * halfH);
-          const pos = diff >= 0;
+          // Bug fix 4: diff===0 is neutral — show no bar on either side.
+          const pos = diff > 0;
+          const neg = diff < 0;
           return (
             <View key={i} style={styles.momentumCol}>
               <View style={{ height: halfH, justifyContent: 'flex-end', alignItems: 'center' }}>
@@ -492,7 +495,7 @@ function MomentumChart({ buckets }) {
               </View>
               <View style={styles.momentumAxis} />
               <View style={{ height: halfH, justifyContent: 'flex-start', alignItems: 'center' }}>
-                {!pos ? <View style={{ width: 14, height: h, backgroundColor: MOMENTUM_NEG, borderRadius: 3 }} /> : <View style={{ width: 14, height: 0 }} />}
+                {neg ? <View style={{ width: 14, height: h, backgroundColor: MOMENTUM_NEG, borderRadius: 3 }} /> : <View style={{ width: 14, height: 0 }} />}
               </View>
               <Text style={styles.momentumLabel}>{b.label.replace('G', '')}</Text>
             </View>
