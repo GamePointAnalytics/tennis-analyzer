@@ -43,7 +43,8 @@ const MODEL_LISTS = {
     { key: 'qwen/qwen-3-max', label: 'Qwen 3 Max' },
     { key: 'z-ai/glm-5.2', label: 'GLM-5.2' },
     { key: 'meta-llama/llama-4-scout', label: 'Llama 4 Scout' },
-    { key: 'google/gemma-4-31b-it', label: 'Gemma 4 31B' }
+    { key: 'google/gemma-4-31b-it', label: 'Gemma 4 31B' },
+    { key: 'custom', label: 'Custom...' }
   ]
 };
 
@@ -320,8 +321,9 @@ export default function SettingsScreen() {
       };
     }
     // openrouter
-    const isPredefined = MODEL_LISTS.openrouter.some(m => m.key === openrouterModel);
-    const selectedModelKey = isPredefined ? openrouterModel : (MODEL_LISTS.openrouter[0]?.key || '');
+    const isPredefined = MODEL_LISTS.openrouter.some(m => m.key === openrouterModel && m.key !== 'custom');
+    // Bug fix: use 'custom' as the sentinel key when not predefined, matching all other providers
+    const selectedModelKey = isPredefined ? openrouterModel : 'custom';
     return {
       key: openrouterApiKey,
       setKey: setOpenrouterApiKey,
@@ -336,7 +338,12 @@ export default function SettingsScreen() {
       models: MODEL_LISTS.openrouter,
       selectedModelKey,
       onSelectModelKey: (k) => {
-        setOpenrouterModel(k);
+        if (k === 'custom') {
+          // Clear to let user type a custom identifier
+          if (isPredefined) setOpenrouterModel('');
+        } else {
+          setOpenrouterModel(k);
+        }
       }
     };
   };

@@ -99,6 +99,8 @@ export default function MatchDetailScreen({ route, navigation }) {
   let game1 = 0;
   let game2 = 0;
   let pointScore = '0-0';
+  // A best-of-3 match is won when one player reaches 2 sets.
+  // (Best-of-5 not supported here; can be extended if needed.)
   let matchOver = false;
 
   if (points.length > 0) {
@@ -114,6 +116,8 @@ export default function MatchDetailScreen({ route, navigation }) {
     // Detect completed sets that the stored data didn't account for.
     // Some data sources track game scores within a set but don't auto-increment
     // the set counter when a set-winning game is reached. Fix it here.
+    // Only apply correction when game scores are still at the set-winning values
+    // (i.e. the counter was NOT already incremented by the save logic).
     const setWonByP1 = (game1 >= 6 && (game1 - game2) >= 2) || (game1 === 7 && game2 === 6);
     const setWonByP2 = (game2 >= 6 && (game2 - game1) >= 2) || (game2 === 7 && game1 === 6);
     if (setWonByP1) {
@@ -126,6 +130,11 @@ export default function MatchDetailScreen({ route, navigation }) {
       game1 = 0;
       game2 = 0;
       pointScore = '0-0';
+    }
+
+    // Detect match completion (best-of-3: first to 2 sets)
+    if (set1 >= 2 || set2 >= 2) {
+      matchOver = true;
     }
   }
 
@@ -160,7 +169,9 @@ export default function MatchDetailScreen({ route, navigation }) {
     } else if (item.outcomeType) {
       detail = item.outcomeType;
       if (item.lastShotType && item.lastShotType !== 'serve') {
-        detail += ` (${item.lastShotHand} ${item.lastShotType})`;
+        // Guard lastShotHand: may be missing in older records
+        const handLabel = item.lastShotHand ? `${item.lastShotHand} ` : '';
+        detail += ` (${handLabel}${item.lastShotType})`;
       }
     }
 
@@ -176,7 +187,7 @@ export default function MatchDetailScreen({ route, navigation }) {
         </Text>
         <View style={styles.pointScoreContainer}>
           <Text style={styles.pointScoreVal}>
-            {item.tiebreak === 'true' 
+            {(item.tiebreak === true || item.tiebreak === 'true')
               ? `[TB] ${item.tiebreakScore1Pre ?? 0}-${item.tiebreakScore2Pre ?? 0}`
               : `${item.pointScore1Pre}-${item.pointScore2Pre}`}
           </Text>
