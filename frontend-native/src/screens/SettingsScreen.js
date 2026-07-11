@@ -22,6 +22,35 @@ export default function SettingsScreen() {
   const [syncing, setSyncing] = useState(false);
   const syncingRef = useRef(false);
 
+  // Analysis & Insights settings
+  const [analysisMode, setAnalysisMode] = useState('hybrid');
+  const [aiProvider, setAiProvider] = useState('anthropic');
+  const [savedAiProvider, setSavedAiProvider] = useState('anthropic');
+
+  // API Keys
+  const [anthropicApiKey, setAnthropicApiKey] = useState('');
+  const [openaiApiKey, setOpenaiApiKey] = useState('');
+  const [geminiApiKey, setGeminiApiKey] = useState('');
+  const [openrouterApiKey, setOpenrouterApiKey] = useState('');
+
+  const [savedAnthropicApiKey, setSavedAnthropicApiKey] = useState('');
+  const [savedOpenaiApiKey, setSavedOpenaiApiKey] = useState('');
+  const [savedGeminiApiKey, setSavedGeminiApiKey] = useState('');
+  const [savedOpenrouterApiKey, setSavedOpenrouterApiKey] = useState('');
+
+  // Models
+  const [anthropicModel, setAnthropicModel] = useState('');
+  const [openaiModel, setOpenaiModel] = useState('');
+  const [geminiModel, setGeminiModel] = useState('');
+  const [openrouterModel, setOpenrouterModel] = useState('');
+
+  const [savedAnthropicModel, setSavedAnthropicModel] = useState('');
+  const [savedOpenaiModel, setSavedOpenaiModel] = useState('');
+  const [savedGeminiModel, setSavedGeminiModel] = useState('');
+  const [savedOpenrouterModel, setSavedOpenrouterModel] = useState('');
+
+  const [savingKey, setSavingKey] = useState(false);
+
   useEffect(() => {
     loadCurrentSettings();
   }, []);
@@ -29,9 +58,33 @@ export default function SettingsScreen() {
   const loadCurrentSettings = async () => {
     setLoading(true);
     const settings = await getSettings();
+
     const id = settings.userId || '';
     setUserId(id);
     setSavedUserId(id);
+
+    setAnalysisMode(settings.analysisMode || 'hybrid');
+    setAiProvider(settings.aiProvider || 'anthropic');
+    setSavedAiProvider(settings.aiProvider || 'anthropic');
+
+    setAnthropicApiKey(settings.anthropicApiKey || '');
+    setSavedAnthropicApiKey(settings.anthropicApiKey || '');
+    setOpenaiApiKey(settings.openaiApiKey || '');
+    setSavedOpenaiApiKey(settings.openaiApiKey || '');
+    setGeminiApiKey(settings.geminiApiKey || '');
+    setSavedGeminiApiKey(settings.geminiApiKey || '');
+    setOpenrouterApiKey(settings.openrouterApiKey || '');
+    setSavedOpenrouterApiKey(settings.openrouterApiKey || '');
+
+    setAnthropicModel(settings.anthropicModel || 'claude-sonnet-5');
+    setSavedAnthropicModel(settings.anthropicModel || 'claude-sonnet-5');
+    setOpenaiModel(settings.openaiModel || 'gpt-4o');
+    setSavedOpenaiModel(settings.openaiModel || 'gpt-4o');
+    setGeminiModel(settings.geminiModel || 'gemini-1.5-pro');
+    setSavedGeminiModel(settings.geminiModel || 'gemini-1.5-pro');
+    setOpenrouterModel(settings.openrouterModel || 'deepseek/deepseek-chat');
+    setSavedOpenrouterModel(settings.openrouterModel || 'deepseek/deepseek-chat');
+
     setLoading(false);
   };
 
@@ -77,6 +130,46 @@ export default function SettingsScreen() {
     );
   };
 
+  // Save AI Settings (provider, keys, models)
+  const handleSaveAiSettings = async () => {
+    setSavingKey(true);
+    const settings = await getSettings();
+    const success = await saveSettings({
+      webAppUrl: settings.webAppUrl,
+      aiProvider,
+      anthropicApiKey: anthropicApiKey.trim(),
+      openaiApiKey: openaiApiKey.trim(),
+      geminiApiKey: geminiApiKey.trim(),
+      openrouterApiKey: openrouterApiKey.trim(),
+      anthropicModel: anthropicModel.trim(),
+      openaiModel: openaiModel.trim(),
+      geminiModel: geminiModel.trim(),
+      openrouterModel: openrouterModel.trim(),
+    });
+    setSavingKey(false);
+    if (success) {
+      setSavedAiProvider(aiProvider);
+      setSavedAnthropicApiKey(anthropicApiKey.trim());
+      setSavedOpenaiApiKey(openaiApiKey.trim());
+      setSavedGeminiApiKey(geminiApiKey.trim());
+      setSavedOpenrouterApiKey(openrouterApiKey.trim());
+      setSavedAnthropicModel(anthropicModel.trim());
+      setSavedOpenaiModel(openaiModel.trim());
+      setSavedGeminiModel(geminiModel.trim());
+      setSavedOpenrouterModel(openrouterModel.trim());
+      Alert.alert('Saved', 'AI configuration saved successfully.');
+    } else {
+      Alert.alert('Error', 'Failed to save AI configuration.');
+    }
+  };
+
+  // Mode selection saves immediately (it's a 3-way toggle, no separate Save step).
+  const handleSelectMode = async (mode) => {
+    setAnalysisMode(mode);
+    const settings = await getSettings();
+    await saveSettings({ analysisMode: mode, webAppUrl: settings.webAppUrl });
+  };
+
   const handleForceSync = async () => {
     if (syncingRef.current) return;
     syncingRef.current = true;
@@ -99,6 +192,118 @@ export default function SettingsScreen() {
   };
 
   const isDirty = userId.trim() !== savedUserId;
+  const aiSettingsDirty =
+    anthropicApiKey.trim() !== savedAnthropicApiKey ||
+    openaiApiKey.trim() !== savedOpenaiApiKey ||
+    geminiApiKey.trim() !== savedGeminiApiKey ||
+    openrouterApiKey.trim() !== savedOpenrouterApiKey ||
+    anthropicModel.trim() !== savedAnthropicModel ||
+    openaiModel.trim() !== savedOpenaiModel ||
+    geminiModel.trim() !== savedGeminiModel ||
+    openrouterModel.trim() !== savedOpenrouterModel ||
+    aiProvider !== savedAiProvider;
+
+  const PROVIDER_OPTIONS = [
+    { key: 'anthropic', label: 'Claude' },
+    { key: 'openai', label: 'GPT' },
+    { key: 'gemini', label: 'Gemini' },
+    { key: 'openrouter', label: 'OpenRouter' },
+  ];
+
+  const getActiveState = () => {
+    if (aiProvider === 'anthropic') {
+      return {
+        key: anthropicApiKey,
+        setKey: setAnthropicApiKey,
+        savedKey: savedAnthropicApiKey,
+        model: anthropicModel,
+        setModel: setAnthropicModel,
+        savedModel: savedAnthropicModel,
+        label: 'Claude (Anthropic)',
+        placeholder: 'sk-ant-...',
+        modelPlaceholder: 'claude-sonnet-5',
+        infoUrl: 'console.anthropic.com'
+      };
+    }
+    if (aiProvider === 'openai') {
+      return {
+        key: openaiApiKey,
+        setKey: setOpenaiApiKey,
+        savedKey: savedOpenaiApiKey,
+        model: openaiModel,
+        setModel: setOpenaiModel,
+        savedModel: savedOpenaiModel,
+        label: 'GPT (OpenAI)',
+        placeholder: 'sk-...',
+        modelPlaceholder: 'gpt-4o',
+        infoUrl: 'platform.openai.com'
+      };
+    }
+    if (aiProvider === 'gemini') {
+      return {
+        key: geminiApiKey,
+        setKey: setGeminiApiKey,
+        savedKey: savedGeminiApiKey,
+        model: geminiModel,
+        setModel: setGeminiModel,
+        savedModel: savedGeminiModel,
+        label: 'Gemini (Google)',
+        placeholder: 'AIzaSy...',
+        modelPlaceholder: 'gemini-1.5-pro',
+        infoUrl: 'aistudio.google.com'
+      };
+    }
+    return {
+      key: openrouterApiKey,
+      setKey: setOpenrouterApiKey,
+      savedKey: savedOpenrouterApiKey,
+      model: openrouterModel,
+      setModel: setOpenrouterModel,
+      savedModel: savedOpenrouterModel,
+      label: 'OpenRouter',
+      placeholder: 'sk-or-...',
+      modelPlaceholder: 'deepseek/deepseek-chat',
+      infoUrl: 'openrouter.ai'
+    };
+  };
+
+  const active = getActiveState();
+
+  const renderProviderButton = (opt) => {
+    const isChosen = aiProvider === opt.key;
+    return (
+      <HapticButton
+        key={opt.key}
+        onPress={() => setAiProvider(opt.key)}
+        style={[styles.providerButton, isChosen && styles.providerButtonActive]}
+      >
+        <Text style={[styles.providerButtonText, isChosen && styles.providerButtonTextActive]}>
+          {opt.label}
+        </Text>
+      </HapticButton>
+    );
+  };
+
+  const MODE_OPTIONS = [
+    { key: 'deterministic', label: 'Rules' },
+    { key: 'hybrid', label: 'Hybrid' },
+    { key: 'llm', label: 'LLM' },
+  ];
+
+  const renderModeButton = (opt) => {
+    const isActive = analysisMode === opt.key;
+    return (
+      <HapticButton
+        key={opt.key}
+        onPress={() => handleSelectMode(opt.key)}
+        style={[styles.modeButton, isActive && styles.modeButtonActive]}
+      >
+        <Text style={[styles.modeButtonText, isActive && styles.modeButtonTextActive]}>
+          {opt.label}
+        </Text>
+      </HapticButton>
+    );
+  };
 
   if (loading) {
     return (
@@ -172,6 +377,106 @@ export default function SettingsScreen() {
         </View>
       </Card>
 
+      {/* ── Analysis & Insights ── */}
+      <Card style={styles.card}>
+        <Text style={styles.sectionHeader}>Analysis &amp; Insights</Text>
+        <Text style={styles.cardSubtext}>
+          Choose how match reports are generated. The new Insights report analyzes serve patterns,
+          strengths/weaknesses, momentum, clutch performance, and gives a win/loss diagnosis with
+          training recommendations.
+        </Text>
+
+        <Text style={styles.fieldLabel}>Report Mode</Text>
+        <View style={styles.modeRow}>
+          {MODE_OPTIONS.map(renderModeButton)}
+        </View>
+        <Text style={styles.modeHint}>
+          {analysisMode === 'deterministic'
+            ? 'Rules-only: instant, offline, no API key needed. Diagnosis is rule-based.'
+            : analysisMode === 'hybrid'
+              ? 'Hybrid: structured stats + AI-written diagnosis & recommendations (default).'
+              : 'LLM: AI writes the full narrative report.'}
+          {(analysisMode === 'hybrid' || analysisMode === 'llm') && !active.savedKey
+            ? `\n⚠️ A key is required for this mode — configure ${active.label} below.`
+            : ''}
+        </Text>
+
+        {analysisMode !== 'deterministic' ? (
+          <>
+            <Text style={styles.fieldLabel}>AI Provider</Text>
+            <View style={styles.providerRow}>
+              {PROVIDER_OPTIONS.map(renderProviderButton)}
+            </View>
+
+            <Text style={styles.fieldLabel}>{active.label} API Key</Text>
+            <TextInput
+              style={styles.idInput}
+              value={active.key}
+              onChangeText={active.setKey}
+              placeholder={active.placeholder}
+              placeholderTextColor="#9CA3AF"
+              autoCapitalize="none"
+              autoCorrect={false}
+              secureTextEntry
+              returnKeyType="done"
+              onSubmitEditing={handleSaveAiSettings}
+              selectTextOnFocus
+            />
+
+            <Text style={styles.fieldLabel}>{active.label} Model Name</Text>
+            <TextInput
+              style={styles.idInput}
+              value={active.model}
+              onChangeText={active.setModel}
+              placeholder={active.modelPlaceholder}
+              placeholderTextColor="#9CA3AF"
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="done"
+              onSubmitEditing={handleSaveAiSettings}
+              selectTextOnFocus
+            />
+
+            <View style={styles.idButtonRow}>
+              <HapticButton
+                onPress={handleSaveAiSettings}
+                style={[styles.saveIdButton, !aiSettingsDirty && styles.saveIdButtonDimmed]}
+                disabled={!aiSettingsDirty || savingKey}
+              >
+                {savingKey ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.saveIdButtonText}>
+                    {aiSettingsDirty ? 'Save AI Configuration' : 'Saved ✓'}
+                  </Text>
+                )}
+              </HapticButton>
+            </View>
+
+            <View style={styles.infoBox}>
+              <View style={styles.infoRow}>
+                <Ionicons name="lock-closed-outline" size={15} color="#3B82F6" style={styles.infoIcon} />
+                <Text style={styles.infoText}>
+                  <Text style={styles.infoBold}>Stored on this device only.</Text> Your key stays in secure
+                  storage and is sent directly to the provider when generating a report — it never touches the
+                  Tennis Analyzer cloud.
+                </Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Ionicons name="key-outline" size={15} color="#3B82F6" style={styles.infoIcon} />
+                <Text style={styles.infoText}>
+                  <Text style={styles.infoBold}>Need a key?</Text> Create one at{' '}
+                  <Text style={{ fontWeight: '700', textDecorationLine: 'underline', color: '#1D4ED8' }}>
+                    {active.infoUrl}
+                  </Text>
+                  . You are billed directly by your chosen provider for LLM/Hybrid report generation.
+                </Text>
+              </View>
+            </View>
+          </>
+        ) : null}
+      </Card>
+
       {/* ── Sync ── */}
       <HapticButton
         onPress={handleForceSync}
@@ -226,6 +531,53 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1F2937',
     marginBottom: 12,
+  },
+  cardSubtext: {
+    fontSize: 12,
+    color: '#6B7280',
+    lineHeight: 17,
+    marginBottom: 14,
+  },
+  fieldLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#9CA3AF',
+    textTransform: 'uppercase',
+    marginBottom: 6,
+    marginTop: 4,
+  },
+  modeRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+  },
+  modeButton: {
+    flex: 1,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    borderRadius: 10,
+    paddingVertical: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modeButtonActive: {
+    backgroundColor: '#3B82F6',
+    borderColor: '#3B82F6',
+  },
+  modeButtonText: {
+    color: '#4B5563',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  modeButtonTextActive: {
+    color: '#FFFFFF',
+  },
+  modeHint: {
+    fontSize: 11,
+    color: '#6B7280',
+    lineHeight: 15,
+    marginBottom: 14,
   },
   idInput: {
     backgroundColor: '#F3F4F6',
@@ -320,5 +672,32 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
     lineHeight: 15,
+  },
+  providerRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 12,
+  },
+  providerButton: {
+    flex: 1,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    borderRadius: 10,
+    paddingVertical: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  providerButtonActive: {
+    backgroundColor: '#3B82F6',
+    borderColor: '#3B82F6',
+  },
+  providerButtonText: {
+    color: '#4B5563',
+    fontWeight: '700',
+    fontSize: 11,
+  },
+  providerButtonTextActive: {
+    color: '#FFFFFF',
   },
 });
