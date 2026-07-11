@@ -286,7 +286,7 @@ export default function MatchDetailScreen({ route, navigation }) {
           style={styles.insightsButton}
         >
           <Ionicons name="bulb-outline" size={20} color="#FFFFFF" />
-          <Text style={styles.insightsButtonText}>Insights Report</Text>
+          <Text style={styles.insightsButtonText}>AI Insights</Text>
         </HapticButton>
 
         {/* Match Metadata */}
