@@ -429,6 +429,25 @@ export default function SettingsScreen() {
           </HapticButton>
         </View>
 
+        {/* ── Sync ── */}
+        <HapticButton
+          onPress={handleForceSync}
+          style={[styles.syncButton, { marginTop: 4, marginBottom: 4 }]}
+          disabled={syncing}
+        >
+          {syncing ? (
+            <ActivityIndicator size="small" color="#3B82F6" />
+          ) : (
+            <>
+              <Ionicons name="cloud-upload-outline" size={18} color="#3B82F6" style={{ marginRight: 8 }} />
+              <Text style={styles.syncButtonText}>Sync Unsaved Data</Text>
+            </>
+          )}
+        </HapticButton>
+        <Text style={[styles.syncHint, { marginBottom: 12, marginTop: 2, textAlign: 'left' }]}>
+          Data is saved locally first and synced to the cloud when you tap this button or when the app is online.
+        </Text>
+
         {/* How it works */}
         <View style={styles.infoBox}>
           <View style={styles.infoRow}>
@@ -573,25 +592,6 @@ export default function SettingsScreen() {
           </>
         ) : null}
       </Card>
-
-      {/* ── Sync ── */}
-      <HapticButton
-        onPress={handleForceSync}
-        style={styles.syncButton}
-        disabled={syncing}
-      >
-        {syncing ? (
-          <ActivityIndicator size="small" color="#3B82F6" />
-        ) : (
-          <>
-            <Ionicons name="cloud-upload-outline" size={18} color="#3B82F6" style={{ marginRight: 8 }} />
-            <Text style={styles.syncButtonText}>Sync Unsaved Data</Text>
-          </>
-        )}
-      </HapticButton>
-      <Text style={styles.syncHint}>
-        Data is saved locally first and synced to the cloud when you tap this button or when the app is online.
-      </Text>
     </ScrollView>
   );
 }
