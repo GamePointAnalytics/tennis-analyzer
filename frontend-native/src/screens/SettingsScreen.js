@@ -41,7 +41,7 @@ const MODEL_LISTS = {
     // 3 Chinese Open Source
     { key: 'deepseek/deepseek-v4-pro', label: 'DeepSeek V4 Pro (CN)' },
     { key: 'qwen/qwen-3-max', label: 'Qwen 3 Max (CN)' },
-    { key: 'zhipu/glm-4-9b-chat', label: 'GLM-4 9B (CN)' },
+    { key: 'z-ai/glm-5.2', label: 'GLM-5.2 (CN)' },
     // 2 American Open Source
     { key: 'meta-llama/llama-4-maverick', label: 'Llama 4 Maverick (US)' },
     { key: 'google/gemma-4-12b', label: 'Gemma 4 12B (US)' }
