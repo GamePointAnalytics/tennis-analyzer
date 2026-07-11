@@ -167,7 +167,6 @@ export default function MatchDetailScreen({ route, navigation }) {
     return (
       <TouchableOpacity
         style={styles.pointRow}
-        key={item.pointIndex ?? index}
         onPress={() => navigation.navigate('PointEditor', { matchIndex, editPointIndex: index })}
         activeOpacity={0.65}
       >
@@ -342,7 +341,11 @@ export default function MatchDetailScreen({ route, navigation }) {
           </View>
         ) : (
           <Card style={styles.pointsListCard}>
-            {points.map((item, index) => renderPointItem({ item, index }))}
+            {points.map((item, index) => (
+            <React.Fragment key={item.pointIndex ?? index}>
+              {renderPointItem({ item, index })}
+            </React.Fragment>
+          ))}
           </Card>
         )}
       </ScrollView>
