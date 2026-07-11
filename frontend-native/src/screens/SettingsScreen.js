@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import HapticButton from '../components/HapticButton';
 import Card from '../components/Card';
-import { getSettings, saveSettings } from '../utils/settings';
+import { getSettings, saveSettings, DEFAULT_MODELS } from '../utils/settings';
 import { syncPendingData } from '../utils/syncManager';
 
 const MODEL_LISTS = {
@@ -110,14 +110,14 @@ export default function SettingsScreen() {
     setOpenrouterApiKey(settings.openrouterApiKey || '');
     setSavedOpenrouterApiKey(settings.openrouterApiKey || '');
 
-    setAnthropicModel(settings.anthropicModel || 'claude-sonnet-5');
-    setSavedAnthropicModel(settings.anthropicModel || 'claude-sonnet-5');
-    setOpenaiModel(settings.openaiModel || 'gpt-4o');
-    setSavedOpenaiModel(settings.openaiModel || 'gpt-4o');
-    setGeminiModel(settings.geminiModel || 'gemini-1.5-pro');
-    setSavedGeminiModel(settings.geminiModel || 'gemini-1.5-pro');
-    setOpenrouterModel(settings.openrouterModel || 'deepseek/deepseek-chat');
-    setSavedOpenrouterModel(settings.openrouterModel || 'deepseek/deepseek-chat');
+    setAnthropicModel(settings.anthropicModel || DEFAULT_MODELS.anthropic);
+    setSavedAnthropicModel(settings.anthropicModel || DEFAULT_MODELS.anthropic);
+    setOpenaiModel(settings.openaiModel || DEFAULT_MODELS.openai);
+    setSavedOpenaiModel(settings.openaiModel || DEFAULT_MODELS.openai);
+    setGeminiModel(settings.geminiModel || DEFAULT_MODELS.gemini);
+    setSavedGeminiModel(settings.geminiModel || DEFAULT_MODELS.gemini);
+    setOpenrouterModel(settings.openrouterModel || DEFAULT_MODELS.openrouter);
+    setSavedOpenrouterModel(settings.openrouterModel || DEFAULT_MODELS.openrouter);
 
     setLoading(false);
   };
@@ -473,7 +473,7 @@ export default function SettingsScreen() {
 
       {/* ── Analysis & Insights ── */}
       <Card style={styles.card}>
-        <Text style={styles.sectionHeader}>Analysis &amp; Insights</Text>
+        <Text style={styles.sectionHeader}>Analysis & Insights</Text>
         <Text style={styles.cardSubtext}>
           Choose how match reports are generated. The new Insights report analyzes serve patterns,
           strengths/weaknesses, momentum, clutch performance, and gives a win/loss diagnosis with

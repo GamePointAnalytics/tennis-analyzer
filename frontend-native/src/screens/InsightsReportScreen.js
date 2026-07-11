@@ -290,7 +290,7 @@ export default function InsightsReportScreen({ route, navigation }) {
             </Section>
 
             <Section title="8 · Recommendations" open={expanded.q8} onToggle={() => toggle('q8')}>
-              {llmText ? null : <RecommendationsBlock recs={insights.q8_recommendations} />}
+              {mode === 'llm' && llmText ? null : <RecommendationsBlock recs={insights.q8_recommendations} />}
             </Section>
           </>
         ) : null}
@@ -635,8 +635,8 @@ function MarkdownBlock({ text }) {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function fmtPct(obj) {
   if (!obj) return '—';
-  if (obj.sufficient === false && obj.d) return `${obj.value}% (n=${obj.d}, thin)`;
   if (obj.value === null || obj.value === undefined) return '—';
+  if (obj.sufficient === false) return `${obj.value}% (n=${obj.n ?? obj.d ?? '?'}, thin)`;
   return `${obj.value}% (${obj.n}/${obj.d})`;
 }
 
