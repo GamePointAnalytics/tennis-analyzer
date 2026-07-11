@@ -14,6 +14,38 @@ import Card from '../components/Card';
 import { getSettings, saveSettings } from '../utils/settings';
 import { syncPendingData } from '../utils/syncManager';
 
+const MODEL_LISTS = {
+  anthropic: [
+    { key: 'claude-3-5-sonnet', label: 'Claude 3.5 Sonnet' },
+    { key: 'claude-3-opus', label: 'Claude 3 Opus' },
+    { key: 'claude-fable', label: 'Claude Fable' },
+    { key: 'custom', label: 'Custom...' }
+  ],
+  openai: [
+    { key: 'gpt-4o', label: 'GPT-4o' },
+    { key: 'gpt-4o-mini', label: 'GPT-4o-mini' },
+    { key: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
+    { key: 'custom', label: 'Custom...' }
+  ],
+  gemini: [
+    { key: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash' },
+    { key: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
+    { key: 'gemini-3.5-flash-high', label: 'Gemini 3.5 Flash (high)' },
+    { key: 'gemini-3.5-flash-medium', label: 'Gemini 3.5 Flash (medium)' },
+    { key: 'gemini-3.5-flash-low', label: 'Gemini 3.5 Flash (low)' },
+    { key: 'custom', label: 'Custom...' }
+  ],
+  openrouter: [
+    // 3 Chinese Open Source
+    { key: 'deepseek/deepseek-chat', label: 'DeepSeek Chat (CN)' },
+    { key: 'qwen/qwen-2.5-72b-instruct', label: 'Qwen 2.5 72B (CN)' },
+    { key: 'zhipu/glm-4-9b-chat', label: 'GLM-4 9B (CN)' },
+    // 2 American Open Source
+    { key: 'meta-llama/llama-3.1-70b-instruct', label: 'Llama 3.1 70B (US)' },
+    { key: 'google/gemma-2-27b-it', label: 'Gemma 2 27B (US)' }
+  ]
+};
+
 export default function SettingsScreen() {
   const [userId, setUserId] = useState('');
   const [savedUserId, setSavedUserId] = useState(''); // tracks what is actually persisted
@@ -212,6 +244,8 @@ export default function SettingsScreen() {
 
   const getActiveState = () => {
     if (aiProvider === 'anthropic') {
+      const isPredefined = MODEL_LISTS.anthropic.some(m => m.key === anthropicModel);
+      const selectedModelKey = isPredefined ? anthropicModel : 'custom';
       return {
         key: anthropicApiKey,
         setKey: setAnthropicApiKey,
@@ -221,11 +255,22 @@ export default function SettingsScreen() {
         savedModel: savedAnthropicModel,
         label: 'Claude (Anthropic)',
         placeholder: 'sk-ant-...',
-        modelPlaceholder: 'claude-sonnet-5',
-        infoUrl: 'console.anthropic.com'
+        modelPlaceholder: 'claude-3-5-sonnet',
+        infoUrl: 'console.anthropic.com',
+        models: MODEL_LISTS.anthropic,
+        selectedModelKey,
+        onSelectModelKey: (k) => {
+          if (k === 'custom') {
+            if (isPredefined) setAnthropicModel('');
+          } else {
+            setAnthropicModel(k);
+          }
+        }
       };
     }
     if (aiProvider === 'openai') {
+      const isPredefined = MODEL_LISTS.openai.some(m => m.key === openaiModel);
+      const selectedModelKey = isPredefined ? openaiModel : 'custom';
       return {
         key: openaiApiKey,
         setKey: setOpenaiApiKey,
@@ -236,10 +281,21 @@ export default function SettingsScreen() {
         label: 'GPT (OpenAI)',
         placeholder: 'sk-...',
         modelPlaceholder: 'gpt-4o',
-        infoUrl: 'platform.openai.com'
+        infoUrl: 'platform.openai.com',
+        models: MODEL_LISTS.openai,
+        selectedModelKey,
+        onSelectModelKey: (k) => {
+          if (k === 'custom') {
+            if (isPredefined) setOpenaiModel('');
+          } else {
+            setOpenaiModel(k);
+          }
+        }
       };
     }
     if (aiProvider === 'gemini') {
+      const isPredefined = MODEL_LISTS.gemini.some(m => m.key === geminiModel);
+      const selectedModelKey = isPredefined ? geminiModel : 'custom';
       return {
         key: geminiApiKey,
         setKey: setGeminiApiKey,
@@ -250,9 +306,21 @@ export default function SettingsScreen() {
         label: 'Gemini (Google)',
         placeholder: 'AIzaSy...',
         modelPlaceholder: 'gemini-1.5-pro',
-        infoUrl: 'aistudio.google.com'
+        infoUrl: 'aistudio.google.com',
+        models: MODEL_LISTS.gemini,
+        selectedModelKey,
+        onSelectModelKey: (k) => {
+          if (k === 'custom') {
+            if (isPredefined) setGeminiModel('');
+          } else {
+            setGeminiModel(k);
+          }
+        }
       };
     }
+    // openrouter
+    const isPredefined = MODEL_LISTS.openrouter.some(m => m.key === openrouterModel);
+    const selectedModelKey = isPredefined ? openrouterModel : (MODEL_LISTS.openrouter[0]?.key || '');
     return {
       key: openrouterApiKey,
       setKey: setOpenrouterApiKey,
@@ -263,7 +331,12 @@ export default function SettingsScreen() {
       label: 'OpenRouter',
       placeholder: 'sk-or-...',
       modelPlaceholder: 'deepseek/deepseek-chat',
-      infoUrl: 'openrouter.ai'
+      infoUrl: 'openrouter.ai',
+      models: MODEL_LISTS.openrouter,
+      selectedModelKey,
+      onSelectModelKey: (k) => {
+        setOpenrouterModel(k);
+      }
     };
   };
 
@@ -423,19 +496,41 @@ export default function SettingsScreen() {
               selectTextOnFocus
             />
 
-            <Text style={styles.fieldLabel}>{active.label} Model Name</Text>
-            <TextInput
-              style={styles.idInput}
-              value={active.model}
-              onChangeText={active.setModel}
-              placeholder={active.modelPlaceholder}
-              placeholderTextColor="#9CA3AF"
-              autoCapitalize="none"
-              autoCorrect={false}
-              returnKeyType="done"
-              onSubmitEditing={handleSaveAiSettings}
-              selectTextOnFocus
-            />
+            <Text style={styles.fieldLabel}>{active.label} Model</Text>
+            <View style={styles.modelGrid}>
+              {active.models.map((m) => {
+                const isSelected = active.selectedModelKey === m.key;
+                return (
+                  <HapticButton
+                    key={m.key}
+                    onPress={() => active.onSelectModelKey(m.key)}
+                    style={[styles.modelPill, isSelected && styles.modelPillActive]}
+                  >
+                    <Text style={[styles.modelPillText, isSelected && styles.modelPillTextActive]}>
+                      {m.label}
+                    </Text>
+                  </HapticButton>
+                );
+              })}
+            </View>
+
+            {active.selectedModelKey === 'custom' ? (
+              <>
+                <Text style={styles.fieldLabel}>Custom Model Identifier</Text>
+                <TextInput
+                  style={styles.idInput}
+                  value={active.model}
+                  onChangeText={active.setModel}
+                  placeholder={active.modelPlaceholder}
+                  placeholderTextColor="#9CA3AF"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  returnKeyType="done"
+                  onSubmitEditing={handleSaveAiSettings}
+                  selectTextOnFocus
+                />
+              </>
+            ) : null}
 
             <View style={styles.idButtonRow}>
               <HapticButton
@@ -698,6 +793,34 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   providerButtonTextActive: {
+    color: '#FFFFFF',
+  },
+  modelGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 12,
+  },
+  modelPill: {
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modelPillActive: {
+    backgroundColor: '#3B82F6',
+    borderColor: '#3B82F6',
+  },
+  modelPillText: {
+    color: '#4B5563',
+    fontWeight: '600',
+    fontSize: 11,
+  },
+  modelPillTextActive: {
     color: '#FFFFFF',
   },
 });
