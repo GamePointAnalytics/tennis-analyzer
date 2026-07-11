@@ -38,11 +38,10 @@ const MODEL_LISTS = {
     { key: 'custom', label: 'Custom...' }
   ],
   openrouter: [
-    // 3 Chinese Open Source
+    { key: 'deepseek/deepseek-r1', label: 'DeepSeek R1 (Reasoning)' },
     { key: 'deepseek/deepseek-v4-pro', label: 'DeepSeek V4 Pro' },
     { key: 'qwen/qwen-3-max', label: 'Qwen 3 Max' },
     { key: 'z-ai/glm-5.2', label: 'GLM-5.2' },
-    // 2 American Open Source
     { key: 'meta-llama/llama-4-scout', label: 'Llama 4 Scout' },
     { key: 'google/gemma-4-31b-it', label: 'Gemma 4 31B' }
   ]

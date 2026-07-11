@@ -437,7 +437,7 @@ function BaselineAnalysis({ insights }) {
         <View key={'ue' + s.shot} style={styles.shotRow}>
           <Text style={styles.shotLabel}>{s.shot}</Text>
           <View style={styles.shotBarTrack}>
-            <View style={[styles.shotBarFill, { flex: s.n, backgroundColor: WEAKNESS }]} />
+            <View style={[styles.shotBarFill, { width: `${s.rate}%`, backgroundColor: WEAKNESS }]} />
           </View>
           <Text style={styles.shotN}>{s.n} ({s.rate}%)</Text>
         </View>
@@ -447,7 +447,7 @@ function BaselineAnalysis({ insights }) {
         <View key={'w' + s.shot} style={styles.shotRow}>
           <Text style={styles.shotLabel}>{s.shot}</Text>
           <View style={styles.shotBarTrack}>
-            <View style={[styles.shotBarFill, { flex: s.n, backgroundColor: STRENGTH }]} />
+            <View style={[styles.shotBarFill, { width: `${s.rate}%`, backgroundColor: STRENGTH }]} />
           </View>
           <Text style={styles.shotN}>{s.n} ({s.rate}%)</Text>
         </View>
@@ -682,12 +682,7 @@ function buildReportHtml(insights, llmText, mode, subjectName, matches) {
   const llmSection = llmText
     ? `<div class="llm">${esc(llmText).replace(/\n/g, '<br>')}</div>`
     : '';
-  const factors = (insights.q7_diagnosis.factors || [])
-    .map((f) => `<li><b>${esc(f.label)}:</b> ${esc(f.evidence)}</li>`)
-    .join('');
-  const recs = (insights.q8_recommendations || [])
-    .map((r) => `<li><b>[${esc(r.area)}]</b> ${esc(r.recommendation)} <i>(↳ ${esc(r.evidence)})</i></li>`)
-    .join('');
+
   const serveBars = (label, dist) => {
     const tot = (dist.wide || 0) + (dist.body || 0) + (dist.t || 0);
     if (!tot) return '';
@@ -699,9 +694,93 @@ function buildReportHtml(insights, llmText, mode, subjectName, matches) {
         <div class="seg t" style="width:${pct(dist.t)}%"></div>
       </div><span class="sn">n=${tot}</span></div>`;
   };
+
   const firstServe = ['Overall','Deuce','Ad','High pressure','Game point']
     .map((l, i) => serveBars(l, [insights.q1_serve_patterns.firstServe.overall, insights.q1_serve_patterns.firstServe.deuce, insights.q1_serve_patterns.firstServe.ad, insights.q1_serve_patterns.firstServe.highPressure, insights.q1_serve_patterns.firstServe.gamePoint][i]))
     .join('');
+
+  const secondServe = ['Overall','Deuce','Ad','High pressure','Game point']
+    .map((l, i) => serveBars(l, [insights.q1_serve_patterns.secondServe.overall, insights.q1_serve_patterns.secondServe.deuce, insights.q1_serve_patterns.secondServe.ad, insights.q1_serve_patterns.secondServe.highPressure, insights.q1_serve_patterns.secondServe.gamePoint][i]))
+    .join('');
+
+  const q1 = insights.q1_serve_patterns;
+  const seqHtml = `
+    <div style="font-size:11px; margin-top:8px; line-height: 1.6; font-family:monospace; background:#f8fafc; padding:8px; border-radius:6px; border:1px solid #e2e8f0;">
+      <b>Serve sequences (W/B/T by point):</b><br>
+      1st · Deuce: ${esc(q1.sequence.firstDeuce || '—')}<br>
+      1st · Ad:    ${esc(q1.sequence.firstAd || '—')}<br>
+      2nd · Deuce: ${esc(q1.sequence.secondDeuce || '—')}<br>
+      2nd · Ad:    ${esc(q1.sequence.secondAd || '—')}
+    </div>
+  `;
+
+  const buildTagListHtml = (strengths, weaknesses) => {
+    if (!strengths.length && !weaknesses.length) {
+      return `<div class="thin-txt">No standout strengths or weaknesses met the sample-size threshold.</div>`;
+    }
+    const strHtml = strengths.map(s => `<div class="tag str">▲ <b>${esc(s.label)}.</b> ${esc(s.evidence)}</div>`).join('');
+    const weakHtml = weaknesses.map(w => `<div class="tag weak">▼ <b>${esc(w.label)}.</b> ${esc(w.evidence)}</div>`).join('');
+    return `<div class="tag-list">${strHtml}${weakHtml}</div>`;
+  };
+
+  const q2 = insights.q2_serve;
+  const serveStrengthsHtml = `
+    <table class="tbl">
+      <tr><td>1st serve in</td><td class="val">${esc(fmtPct(q2.firstServeInPct))}</td></tr>
+      <tr><td>1st serve won</td><td class="val">${esc(fmtPct(q2.firstServeWonPct))}</td></tr>
+      <tr><td>2nd serve won</td><td class="val">${esc(fmtPct(q2.secondServeWonPct))}</td></tr>
+      <tr><td>Aces</td><td class="val">${esc(q2.aces)}</td></tr>
+      <tr><td>Double faults</td><td class="val">${esc(q2.doubleFaults)}</td></tr>
+      <tr><td>Unreturnable serves</td><td class="val">${esc(q2.unreturnableServes)}</td></tr>
+      ${q2.faultTendency.sufficient ? `<tr><td>Fault tendency</td><td class="val">mostly ${esc(q2.faultTendency.dominant)} (${esc(q2.faultTendency.net)} net / ${esc(q2.faultTendency.out)} out)</td></tr>` : ''}
+    </table>
+    ${buildTagListHtml(q2.strengths, q2.weaknesses)}
+  `;
+
+  const q3 = insights.q3_baseline;
+  const ueRows = q3.unforcedErrors.byShot.filter(s => s.n > 0).map(s => `
+    <div class="shot-row">
+      <span class="shot-lbl">${esc(s.shot)}</span>
+      <div class="shot-track">
+        <div class="shot-fill ue" style="width:${s.rate}%"></div>
+      </div>
+      <span class="shot-n">${esc(s.n)} (${esc(s.rate)}%)</span>
+    </div>
+  `).join('');
+  
+  const winRows = q3.winners.byShot.filter(s => s.n > 0).map(s => `
+    <div class="shot-row">
+      <span class="shot-lbl">${esc(s.shot)}</span>
+      <div class="shot-track">
+        <div class="shot-fill win" style="width:${s.rate}%"></div>
+      </div>
+      <span class="shot-n">${esc(s.n)} (${esc(s.rate)}%)</span>
+    </div>
+  `).join('');
+
+  const baselineHtml = `
+    <div style="font-size:12px; font-weight:700; margin-top:6px; color:#4B5563;">Unforced errors: ${q3.unforcedErrors.total} (net ${q3.unforcedErrors.net}, out ${q3.unforcedErrors.out})</div>
+    ${ueRows || '<div class="thin-txt">No unforced errors recorded.</div>'}
+    <div style="font-size:12px; font-weight:700; margin-top:10px; color:#4B5563;">Winners & forced errors: ${q3.winners.total}</div>
+    ${winRows || '<div class="thin-txt">No winners recorded.</div>'}
+    ${buildTagListHtml(q3.strengths, q3.weaknesses)}
+  `;
+
+  const q4 = insights.q4_net;
+  const netGameHtml = `
+    <table class="tbl">
+      <tr><td>Net points played</td><td class="val">${esc(q4.netPointsPlayed)}</td></tr>
+      <tr><td>Net points won</td><td class="val">${esc(q4.netPointsWon)}/${esc(q4.netPointsPlayed)} (${esc(fmtPct(q4.netWinPct))})</td></tr>
+      <tr><td>Volley (won / UE)</td><td class="val">${esc(q4.volley.won)} / ${esc(q4.volley.unforcedErrors)}</td></tr>
+      <tr><td>Overhead (won / UE)</td><td class="val">${esc(q4.overhead.won)} / ${esc(q4.overhead.unforcedErrors)}</td></tr>
+    </table>
+    ${q4.assessment ? `
+      <div class="assess-box" style="${q4.assessment.sufficient && q4.assessment.label.indexOf('Weak') !== -1 ? 'background-color: #FEF2F2; color: #991B1B;' : q4.assessment.sufficient && q4.assessment.label.indexOf('Strong') !== -1 ? 'background-color: #ECFDF5; color: #065F46;' : 'background-color: #F3F4F6;'}">
+        <span class="assess-bold">${esc(q4.assessment.label)}.</span> ${esc(q4.assessment.evidence)}
+      </div>
+    ` : ''}
+  `;
+
   const buckets = (insights.q5_timeseries.buckets || []).filter((b) => !b.isSetMarker);
   const maxAbs = Math.max(1, ...buckets.map((b) => Math.abs(b.diff || 0)));
   const momentum = buckets.map((b) => {
@@ -710,19 +789,93 @@ function buildReportHtml(insights, llmText, mode, subjectName, matches) {
     return `<div class="mcol"><div class="mtop">${pos ? `<div class="mbar pos" style="height:${h}px"></div>` : ''}</div><div class="mline"></div><div class="mbot">${!pos ? `<div class="mbar neg" style="height:${h}px"></div>` : ''}</div><div class="mlab">${esc(b.label).replace('G','')}</div></div>`;
   }).join('');
 
+  const ts = insights.q5_timeseries;
+  const consistencyHtml = `
+    ${ts.consistency.sufficient ? `
+      <div class="assess-box">
+        <span class="assess-bold">${esc(ts.consistency.label)}.</span> Mean point differential ${esc(ts.consistency.mean)}/bucket, variance ${esc(ts.consistency.variance)}.
+      </div>
+    ` : `<div class="thin-txt">Insufficient data to assess consistency (${esc(ts.consistency.label)}).</div>`}
+    
+    ${ts.stretches && ts.stretches.length > 0 ? ts.stretches.map(s => `
+      <div style="font-size:11px; margin-top:4px; color:#374151;">• <b>${s.type === 'better' ? 'Better stretch' : 'Worse stretch'}</b> — ${esc(s.evidence)}.</div>
+    `).join('') : '<div class="thin-txt">No significant better/worse stretches detected.</div>'}
+  `;
+
+  const q6 = insights.q6_mental;
+  const clutchHtml = `
+    <table class="tbl">
+      <tr><td>High-pressure points won</td><td class="val">${esc(q6.highPressure.won)}/${esc(q6.highPressure.won + q6.highPressure.lost)} (${esc(fmtPct(q6.highPressure.winPct))})</td></tr>
+      <tr><td>HP on serve / return</td><td class="val">${esc(q6.highPressure.onServe)} / ${esc(q6.highPressure.onReturn)}</td></tr>
+      <tr><td>HP first serve in</td><td class="val">${esc(fmtPct(q6.highPressure.firstServeInPct))}</td></tr>
+      ${q6.highPressure.ueRateUnderPressure !== null && q6.highPressure.ueRateOverall !== null ? `
+        <tr><td>Unforced-error rate</td><td class="val">${esc(q6.highPressure.ueRateUnderPressure)}% under pressure vs ${esc(q6.highPressure.ueRateOverall)}% overall</td></tr>
+      ` : ''}
+      <tr><td>Break points</td><td class="val">${esc(q6.breakPoints.won)}/${esc(q6.breakPoints.created)} (${esc(fmtPct(q6.breakPoints.convPct))})</td></tr>
+      <tr><td>Game points</td><td class="val">${esc(q6.gamePoints.won)}/${esc(q6.gamePoints.created)} (${esc(fmtPct(q6.gamePoints.convPct))})</td></tr>
+    </table>
+    ${q6.assessment.length > 0 ? `
+      <div class="assess-box" style="background-color: #F8FAFC; border: 1px solid #E2E8F0;">
+        ${q6.assessment.map(a => `<div style="margin-top:2px;">• <span class="assess-bold">${esc(a.label)}.</span> ${esc(a.evidence)}</div>`).join('')}
+      </div>
+    ` : `<div class="thin-txt">Insufficient high-pressure data for a clutch assessment.</div>`}
+  `;
+
+  const factors = (insights.q7_diagnosis.factors || [])
+    .map((f) => `<div style="padding: 6px 0; border-bottom: 1px solid #F0F0F0;"><div style="font-size:12px; font-weight:700; color:#1E293B;">${esc(f.label)}</div><div style="font-size:11px; color:#4B5563; margin-top:2px;">${esc(f.evidence)}</div></div>`)
+    .join('');
+
+  const recsHtml = (insights.q8_recommendations || [])
+    .map((r) => `
+      <div class="rec-card">
+        <div class="rec-area">${esc(r.area)}</div>
+        <div class="rec-txt">${esc(r.recommendation)}</div>
+        <div class="rec-ev">↳ ${esc(r.evidence)}</div>
+      </div>
+    `)
+    .join('');
+
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
     body{font-family:Arial,Helvetica,sans-serif;background:#f4f6f9;margin:0;padding:20px;color:#111827}
     .card{background:#fff;border-radius:10px;padding:16px;margin-bottom:14px}
     h1{font-size:20px;margin:0 0 4px} .sub{color:#6B7280;font-size:12px;margin-bottom:12px}
-    h2{font-size:14px;color:#2d4a8a;margin:14px 0 6px}
+    h2{font-size:14px;color:#2d4a8a;margin:14px 0 8px;border-bottom:1px solid #E5E7EB;padding-bottom:4px}
     .llm{font-size:13px;line-height:18px;white-space:pre-wrap}
     ul{font-size:13px;line-height:18px}
+    
     .sbar{display:flex;align-items:center;gap:8px;margin:4px 0}
     .sl{width:90px;font-size:11px;color:#374151}
     .strack{flex:1;height:12px;background:#F3F4F6;border-radius:6px;display:flex;overflow:hidden}
     .seg{height:12px}.w{background:#3B82F6}.b{background:#F59E0B}.t{background:#10B981}
-    .sn{font-size:11px;color:#9CA3AF}
+    .sn{font-size:11px;color:#9CA3AF;width:34px}
+    
+    .shot-row { display: flex; align-items: center; margin: 5px 0; gap: 8px; }
+    .shot-lbl { width: 80px; font-size: 11px; text-transform: capitalize; color: #374151; }
+    .shot-track { flex: 1; height: 8px; background: #F3F4F6; border-radius: 4px; display: flex; }
+    .shot-fill { height: 8px; border-radius: 4px; }
+    .shot-fill.ue { background: #EF4444; }
+    .shot-fill.win { background: #10B981; }
+    .shot-n { font-size: 11px; color: #6B7280; width: 64px; text-align: right; }
+    
+    .tag-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+    .tag { display: flex; align-items: flex-start; gap: 6px; border-radius: 6px; padding: 6px 10px; font-size: 11px; }
+    .tag.str { background: #ECFDF5; color: #065F46; border-left: 3px solid #10B981; }
+    .tag.weak { background: #FEF2F2; color: #991B1B; border-left: 3px solid #EF4444; }
+    
+    .assess-box { background: #F3F4F6; border-radius: 8px; padding: 10px; margin-top: 8px; font-size: 11px; line-height: 1.4; color: #374151; }
+    .assess-bold { font-weight: 700; color: #1F2937; }
+    .thin-txt { font-size: 11px; color: #9CA3AF; font-style: italic; margin-top: 6px; }
+    
+    .tbl { width: 100%; border-collapse: collapse; margin-top: 6px; margin-bottom: 6px; }
+    .tbl td { padding: 5px 0; font-size: 12px; border-bottom: 1px solid #F0F0F0; color: #374151; }
+    .tbl td.val { text-align: right; font-weight: 700; color: #111827; }
+    
+    .rec-card { background: #F8FAFC; border-radius: 8px; border: 1px solid #E2E8F0; padding: 8px 10px; margin-bottom: 8px; font-size: 11px; }
+    .rec-area { font-weight: 800; color: #3B82F6; text-transform: uppercase; margin-bottom: 2px; }
+    .rec-txt { color: #1E293B; line-height: 1.4; }
+    .rec-ev { color: #64748B; font-style: italic; margin-top: 2px; }
+    
     .mwrap{display:flex;align-items:flex-end;gap:3px;height:90px;margin:8px 0}
     .mcol{flex:1;display:flex;flex-direction:column;align-items:center}
     .mtop,.mbot{height:40px;width:100%;display:flex;justify-content:center;align-items:flex-end}
@@ -734,13 +887,54 @@ function buildReportHtml(insights, llmText, mode, subjectName, matches) {
   </style></head><body>
   <div class="card"><h1>${esc(subjectName)} — Insights Report</h1><div class="sub">${matchLine}<br>${mode} mode</div></div>
   ${llmSection ? `<div class="card"><h2>AI Analysis</h2><div class="llm">${esc(llmText).replace(/\n/g,'<br>')}</div></div>` : ''}
-  <div class="card"><h2>1 · Serve Patterns (first serve)</h2>${firstServe}
-    <div class="leg"><span style="color:#3B82F6">■</span> Wide &nbsp; <span style="color:#F59E0B">■</span> Body &nbsp; <span style="color:#10B981">■</span> T</div></div>
-  <div class="card"><h2>5 · Momentum</h2><div class="mwrap">${momentum}</div>
-    <div class="leg"><span style="color:#10B981">■</span> Won more &nbsp; <span style="color:#EF4444">■</span> Lost more</div></div>
-  <div class="card"><h2>7 · Why the subject won or lost</h2><p>${esc(insights.q7_diagnosis.summary)}</p><ul>${factors}</ul></div>
-  <div class="card"><h2>8 · Recommendations</h2><ul>${recs}</ul></div>
-  <div class="leg" style="text-align:center">Generated by Tennis Analyzer</div>
+  
+  ${!(mode === 'llm' && llmText) ? `
+    <div class="card">
+      <h2>1 · Serve Patterns</h2>
+      <div style="font-size: 12px; font-weight:700; color:#4B5563; margin-top:8px;">First serve</div>
+      ${firstServe || '<div class="thin-txt">No first serve data.</div>'}
+      <div style="font-size: 12px; font-weight:700; color:#4B5563; margin-top:12px;">Second serve</div>
+      ${secondServe || '<div class="thin-txt">No second serve data.</div>'}
+      <div class="leg"><span style="color:#3B82F6">■</span> Wide &nbsp; <span style="color:#F59E0B">■</span> Body &nbsp; <span style="color:#10B981">■</span> T</div>
+      ${seqHtml}
+    </div>
+    
+    <div class="card">
+      <h2>2 · Serve Strengths & Weaknesses</h2>
+      ${serveStrengthsHtml}
+    </div>
+    
+    <div class="card">
+      <h2>3 · Baseline Strengths & Weaknesses</h2>
+      ${baselineHtml}
+    </div>
+    
+    <div class="card">
+      <h2>4 · Net Game</h2>
+      ${netGameHtml}
+    </div>
+    
+    <div class="card">
+      <h2>5 · Momentum & Consistency</h2>
+      <div class="mwrap">${momentum}</div>
+      <div class="leg"><span style="color:#10B981">■</span> Won more &nbsp; <span style="color:#EF4444">■</span> Lost more</div>
+      ${consistencyHtml}
+    </div>
+    
+    <div class="card">
+      <h2>6 · Clutch Performance</h2>
+      ${clutchHtml}
+    </div>
+  ` : ''}
+  
+  <div class="card">
+    <h2>7 · Why the subject won or lost</h2>
+    ${llmText ? `<div class="llm">${esc(llmText).replace(/\n/g,'<br>')}</div>` : `<p style="font-size:12px; font-weight:700; color:#1F2937; line-height:1.5;">${esc(insights.q7_diagnosis.summary)}</p>${factors}`}
+  </div>
+  
+  ${(mode === 'llm' && llmText) ? '' : `<div class="card"><h2>8 · Recommendations</h2>${recsHtml}</div>`}
+  
+  <div class="leg" style="text-align:center; margin-top: 20px; font-size: 10px;">Generated by Tennis Analyzer</div>
   </body></html>`;
 }
 

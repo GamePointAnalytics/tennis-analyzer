@@ -276,7 +276,7 @@ export default function MatchDetailScreen({ route, navigation }) {
             style={styles.analysisButton}
           >
             <Ionicons name="analytics" size={20} color="#3B82F6" />
-            <Text style={styles.analysisButtonText}>View Analysis</Text>
+            <Text style={styles.analysisButtonText}>View Stats</Text>
           </HapticButton>
         </View>
 
