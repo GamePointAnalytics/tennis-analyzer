@@ -10,6 +10,7 @@ import MatchEditorScreen from './src/screens/MatchEditorScreen';
 import MatchDetailScreen from './src/screens/MatchDetailScreen';
 import PointEditorScreen from './src/screens/PointEditorScreen';
 import AnalysisScreen from './src/screens/AnalysisScreen';
+import InsightsReportScreen from './src/screens/InsightsReportScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 
 // Database Initializer
@@ -67,6 +68,7 @@ export default function App() {
         <Stack.Screen name="MatchDetail" component={MatchDetailScreen} />
         <Stack.Screen name="PointEditor" component={PointEditorScreen} />
         <Stack.Screen name="Analysis" component={AnalysisScreen} />
+        <Stack.Screen name="InsightsReport" component={InsightsReportScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
       </Stack.Navigator>
     </NavigationContainer>

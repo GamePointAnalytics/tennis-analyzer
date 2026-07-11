@@ -3222,6 +3222,9 @@ function doPost(e) {
       case "getAnalysis":
         result.data = handleGetAnalysis(payload.matchIndex);
         break;
+      case "getInsights":
+        result.data = handleGetInsights(payload.matchIndexes, payload.side);
+        break;
       case "getMatchesByUser":
         result.data = handleGetMatchesByUser(payload.userId);
         break;
@@ -3359,5 +3362,177 @@ function handleGetMatchesByUser(userId) {
   }
 
   return matches;
+}
+
+// ==========================================
+// Insights layer (additive, on top of the raw engine)
+// ==========================================
+
+// Get-or-create the insights_cache sheet.
+function getInsightsCacheSheet() {
+  var sheet = spreadsheet.getSheetByName('insights_cache');
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet('insights_cache');
+    sheet.appendRow(['matchKey', 'insightsJson', 'cachedAt']);
+  }
+  return sheet;
+}
+
+// Normalize one match's point-object rows so the chosen side becomes "subject".
+// Returns { rows, subjectName, opponentName }.
+function normalizePointsForSubject(rowsForMatch, side) {
+  if (!rowsForMatch || rowsForMatch.length === 0) {
+    return { rows: [], subjectName: '', opponentName: '' };
+  }
+  var p1 = String(rowsForMatch[0]['player 1'] || '');
+  var p2 = String(rowsForMatch[0]['player 2'] || '');
+  var subjectName = (side === 'player2') ? p2 : p1;
+  var opponentName = (side === 'player2') ? p1 : p2;
+
+  var remap = function (v) {
+    v = String(v || '').trim();
+    if (v === subjectName) return 'subject';
+    if (v === opponentName) return 'opponent';
+    return v;
+  };
+
+  var out = [];
+  for (var i = 0; i < rowsForMatch.length; i++) {
+    var r = rowsForMatch[i];
+    var n = {};
+    // copy all keys through
+    for (var k in r) { if (Object.prototype.hasOwnProperty.call(r, k)) n[k] = r[k]; }
+    n['player 1'] = 'subject';
+    n['player 2'] = 'opponent';
+    n['server'] = remap(r['server']);
+    n['winner'] = remap(r['winner']);
+    // coerce numeric fields the helpers depend on
+    n['rally length']            = Number(r['rally length']) || 0;
+    n['game score 1 pre']        = Number(r['game score 1 pre']) || 0;
+    n['game score 2 pre']        = Number(r['game score 2 pre']) || 0;
+    n['game score 1 post']       = Number(r['game score 1 post']) || 0;
+    n['game score 2 post']       = Number(r['game score 2 post']) || 0;
+    n['set score 1 pre']         = Number(r['set score 1 pre']) || 0;
+    n['set score 2 pre']         = Number(r['set score 2 pre']) || 0;
+    n['tiebreak score 1 pre']    = (r['tiebreak score 1 pre'] === '' || r['tiebreak score 1 pre'] === null) ? 0 : Number(r['tiebreak score 1 pre']);
+    n['tiebreak score 2 pre']    = (r['tiebreak score 2 pre'] === '' || r['tiebreak score 2 pre'] === null) ? 0 : Number(r['tiebreak score 2 pre']);
+    n['match index']             = String(r['match index']);
+    out.push(n);
+  }
+  return { rows: out, subjectName: subjectName, opponentName: opponentName };
+}
+
+// Compute structured insights for one or more matches from a chosen side.
+// mode is NOT used here — the backend always returns the same structured JSON;
+// the device decides whether to enrich with an LLM pass.
+function handleGetInsights(matchIndexes, side) {
+  side = side || 'player1';
+  if (!matchIndexes || !matchIndexes.length) return null;
+
+  var keySet = matchIndexes.slice().sort().join(',') + '|' + side;
+
+  // 1. Cache lookup
+  var cacheSheet = getInsightsCacheSheet();
+  var cacheVals = cacheSheet.getDataRange().getValues();
+  var keyCol = 0;
+  for (var i = 1; i < cacheVals.length; i++) {
+    if (String(cacheVals[i][keyCol]) === keySet) {
+      try {
+        return JSON.parse(cacheVals[i][1]);
+      } catch (e) {
+        // corrupt cache row — fall through and recompute
+        break;
+      }
+    }
+  }
+
+  // 2. Gather match metadata from the analyses sheet (for the report header)
+  var analysesSheet = spreadsheet.getSheetByName('analyses');
+  var aVals = analysesSheet.getDataRange().getValues();
+  var aHeaders = aVals[0];
+  var miColA = aHeaders.indexOf('match index');
+  var p1ColA = aHeaders.indexOf('player1');
+  var p2ColA = aHeaders.indexOf('player2');
+  var dateColA = aHeaders.indexOf('date');
+  var tourColA = aHeaders.indexOf('tournament');
+  var scoreColA = aHeaders.indexOf('score');
+  var adColA = aHeaders.indexOf('ad scoring');
+
+  var wanted = {};
+  for (var m = 0; m < matchIndexes.length; m++) wanted[String(matchIndexes[m])] = true;
+
+  var matchesMeta = [];
+  for (var j = 1; j < aVals.length; j++) {
+    if (wanted[String(aVals[j][miColA])]) {
+      matchesMeta.push({
+        matchIndex: String(aVals[j][miColA]),
+        player1: aVals[j][p1ColA],
+        player2: aVals[j][p2ColA],
+        date: aVals[j][dateColA],
+        tournament: aVals[j][tourColA],
+        score: aVals[j][scoreColA],
+        adScoring: aVals[j][adColA]
+      });
+    }
+  }
+
+  // 3. Read points, group by matchIndex (preserve point order)
+  var pointsSheet = spreadsheet.getSheetByName('points');
+  var pVals = pointsSheet.getDataRange().getValues();
+  var pHeaders = pVals[0];
+  var miColP = pHeaders.indexOf('match index');
+  var pointIndexCol = pHeaders.indexOf('point index');
+
+  var byMatch = {}; // matchIndex -> [pointObj,...]
+  for (var r = 1; r < pVals.length; r++) {
+    var mi = String(pVals[r][miColP]);
+    if (!wanted[mi]) continue;
+    var pt = {};
+    for (var c = 0; c < pHeaders.length; c++) pt[pHeaders[c]] = pVals[r][c];
+    if (!byMatch[mi]) byMatch[mi] = [];
+    byMatch[mi].push(pt);
+  }
+  // Sort each match's points by point index (if present)
+  for (var mi2 in byMatch) {
+    if (pointIndexCol !== -1) {
+      byMatch[mi2].sort(function (a, b) {
+        var ai = Number(a['point index']) || 0;
+        var bi = Number(b['point index']) || 0;
+        return ai - bi;
+      });
+    }
+  }
+
+  // 4. Normalize each match's points to the subject perspective and concatenate
+  var allRows = [];
+  var subjectName = '';
+  var opponentName = '';
+  // Process matches in the order they appear in matchesMeta (date desc) for a
+  // sensible combined time-series.
+  for (var t = 0; t < matchesMeta.length; t++) {
+    var mi3 = matchesMeta[t].matchIndex;
+    var matchRows = byMatch[mi3] || [];
+    if (matchRows.length === 0) continue;
+    var norm = normalizePointsForSubject(matchRows, side);
+    if (!subjectName) { subjectName = norm.subjectName; opponentName = norm.opponentName; }
+    allRows = allRows.concat(norm.rows);
+  }
+
+  if (allRows.length === 0) {
+    var empty = { subject: subjectName || '', opponent: opponentName || '', matches: matchesMeta, totalPoints: 0, error: 'No point data found for the selected match(es).' };
+    return empty;
+  }
+
+  // 5. Run the pure insights engine (defined in InsightsLib.js)
+  var insights = computeInsights(allRows, subjectName, opponentName);
+  insights.matches = matchesMeta;
+
+  // 6. Cache and return
+  try {
+    cacheSheet.appendRow([keySet, JSON.stringify(insights), new Date().toISOString()]);
+  } catch (e) {
+    // caching failure is non-fatal
+  }
+  return insights;
 }
 

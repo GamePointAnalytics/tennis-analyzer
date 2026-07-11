@@ -133,6 +133,18 @@ export async function fetchAnalysisFromCloud(matchIndex) {
   return await makeRequest(payload);
 }
 
+// Fetch structured insights for one or more matches from a chosen player's side.
+// mode is resolved on-device (Deterministic/LLM/Hybrid), so it isn't sent here —
+// the backend always returns the same structured JSON.
+export async function fetchInsightsFromCloud(matchIndexes, side) {
+  const payload = {
+    action: 'getInsights',
+    matchIndexes,
+    side: side || 'player1',
+  };
+  return await makeRequest(payload);
+}
+
 export async function fetchMatchesFromCloud(userId) {
   const payload = {
     action: 'getMatchesByUser',

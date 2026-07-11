@@ -19,6 +19,33 @@ export default function MatchesScreen({ navigation }) {
   const [matches, setMatches] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const isFocused = useIsFocused();
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState({}); // matchIndex -> true
+
+  const selectedCount = Object.keys(selected).filter((k) => selected[k]).length;
+
+  const toggleSelect = (matchIndex) => {
+    setSelected((prev) => {
+      const next = { ...prev };
+      if (next[matchIndex]) delete next[matchIndex];
+      else next[matchIndex] = true;
+      return next;
+    });
+  };
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelected({});
+  };
+
+  const analyzeSelected = () => {
+    if (selectedCount === 0) return;
+    const matchIndexes = matches
+      .filter((m) => selected[m.matchIndex])
+      .map((m) => m.matchIndex);
+    exitSelectMode();
+    navigation.navigate('InsightsReport', { matchIndexes, side: 'player1' });
+  };
 
   useEffect(() => {
     if (isFocused) {
@@ -128,29 +155,55 @@ export default function MatchesScreen({ navigation }) {
         <View style={styles.divider} />
 
         <View style={styles.cardActions}>
-          <HapticButton 
-            onPress={() => navigation.navigate('MatchDetail', { matchIndex: item.matchIndex })}
-            style={styles.detailButton}
-          >
-            <Ionicons name="eye-outline" size={16} color="#3B82F6" />
-            <Text style={styles.detailButtonText}>View Detail</Text>
-          </HapticButton>
+          {selectMode ? (
+            <HapticButton
+              onPress={() => toggleSelect(item.matchIndex)}
+              style={[
+                styles.detailButton,
+                selected[item.matchIndex] && styles.detailButtonSelected,
+              ]}
+            >
+              <Ionicons
+                name={selected[item.matchIndex] ? 'checkbox' : 'square-outline'}
+                size={16}
+                color={selected[item.matchIndex] ? '#FFFFFF' : '#3B82F6'}
+              />
+              <Text
+                style={[
+                  styles.detailButtonText,
+                  selected[item.matchIndex] && styles.detailButtonTextSelected,
+                ]}
+              >
+                {selected[item.matchIndex] ? 'Selected' : 'Select for analysis'}
+              </Text>
+            </HapticButton>
+          ) : (
+            <>
+              <HapticButton
+                onPress={() => navigation.navigate('MatchDetail', { matchIndex: item.matchIndex })}
+                style={styles.detailButton}
+              >
+                <Ionicons name="eye-outline" size={16} color="#3B82F6" />
+                <Text style={styles.detailButtonText}>View Detail</Text>
+              </HapticButton>
 
-          <View style={styles.rightActions}>
-            <HapticButton 
-              onPress={() => navigation.navigate('MatchEditor', { matchIndex: item.matchIndex })}
-              style={styles.actionIconButton}
-            >
-              <Ionicons name="create-outline" size={18} color="#4B5563" />
-            </HapticButton>
-            
-            <HapticButton 
-              onPress={() => handleDelete(item.matchIndex)}
-              style={styles.actionIconButton}
-            >
-              <Ionicons name="trash-outline" size={18} color="#EF4444" />
-            </HapticButton>
-          </View>
+              <View style={styles.rightActions}>
+                <HapticButton
+                  onPress={() => navigation.navigate('MatchEditor', { matchIndex: item.matchIndex })}
+                  style={styles.actionIconButton}
+                >
+                  <Ionicons name="create-outline" size={18} color="#4B5563" />
+                </HapticButton>
+
+                <HapticButton
+                  onPress={() => handleDelete(item.matchIndex)}
+                  style={styles.actionIconButton}
+                >
+                  <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                </HapticButton>
+              </View>
+            </>
+          )}
         </View>
       </Card>
     );
@@ -164,13 +217,23 @@ export default function MatchesScreen({ navigation }) {
           <Text style={styles.subtitle}>Your match history</Text>
         </View>
         <View style={styles.headerButtons}>
-          <HapticButton 
+          <HapticButton
+            onPress={selectMode ? exitSelectMode : () => setSelectMode(true)}
+            style={styles.settingsButton}
+          >
+            <Ionicons
+              name={selectMode ? 'close' : 'checkbox-outline'}
+              size={22}
+              color={selectMode ? '#EF4444' : '#1F2937'}
+            />
+          </HapticButton>
+          <HapticButton
             onPress={() => navigation.navigate('Settings')}
             style={styles.settingsButton}
           >
             <Ionicons name="settings-outline" size={22} color="#1F2937" />
           </HapticButton>
-          <HapticButton 
+          <HapticButton
             onPress={() => navigation.navigate('MatchEditor')}
             style={styles.addButton}
           >
@@ -201,6 +264,22 @@ export default function MatchesScreen({ navigation }) {
           </View>
         }
       />
+
+      {selectMode ? (
+        <View style={styles.selectBar}>
+          <Text style={styles.selectBarText}>
+            {selectedCount} match{selectedCount !== 1 ? 'es' : ''} selected
+          </Text>
+          <HapticButton
+            onPress={analyzeSelected}
+            style={[styles.selectBarButton, selectedCount === 0 && styles.selectBarButtonDisabled]}
+            disabled={selectedCount === 0}
+          >
+            <Ionicons name="bulb-outline" size={18} color="#FFFFFF" />
+            <Text style={styles.selectBarButtonText}>Analyze</Text>
+          </HapticButton>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -366,6 +445,52 @@ const styles = StyleSheet.create({
     color: '#0369A1',
     fontSize: 13,
     fontWeight: '700',
+    marginLeft: 6,
+  },
+  detailButtonSelected: {
+    backgroundColor: '#3B82F6',
+  },
+  detailButtonTextSelected: {
+    color: '#FFFFFF',
+  },
+  selectBar: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#1E293B',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  selectBarText: {
+    color: '#E5E7EB',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  selectBarButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#3B82F6',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  selectBarButtonDisabled: {
+    backgroundColor: '#93C5FD',
+  },
+  selectBarButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 14,
     marginLeft: 6,
   },
   rightActions: {

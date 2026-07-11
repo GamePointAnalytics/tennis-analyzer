@@ -86,6 +86,18 @@ export async function initializeDb() {
     );
   `);
 
+  // Insights report cache — stores structured insights (+ optional LLM text) per
+  // (match set | side | mode). Keyed by a composite string so single-match,
+  // multi-match, and each mode are cached separately.
+  await db.execAsync(`
+    CREATE TABLE IF NOT EXISTS insights_cache (
+      cacheKey TEXT PRIMARY KEY,
+      insightsJson TEXT NOT NULL,
+      llmText TEXT,
+      cachedAt TEXT NOT NULL
+    );
+  `);
+
   // Migrate existing tables
   try {
     await db.execAsync('ALTER TABLE points ADD COLUMN gameScore1Post INTEGER;');
@@ -309,6 +321,52 @@ export async function saveAnalysisCache(matchIndex, analysisData) {
 export async function clearAnalysisCache(matchIndex) {
   const database = await initializeDb();
   await database.runAsync('DELETE FROM analyses_cache WHERE matchIndex = ?', [matchIndex]);
+}
+
+// ==========================================
+// INSIGHTS CACHE (structured report layer)
+// ==========================================
+
+// Build a stable cache key from a set of matches + side + mode.
+// matchIndexes are sorted so order doesn't matter.
+export function buildInsightsCacheKey(matchIndexes, side, mode) {
+  const sorted = (matchIndexes || []).slice().sort().join(',');
+  return `${sorted}|${side || 'player1'}|${mode || 'hybrid'}`;
+}
+
+export async function getInsightsCache(matchIndexes, side, mode) {
+  const database = await initializeDb();
+  const key = buildInsightsCacheKey(matchIndexes, side, mode);
+  const row = await database.getFirstAsync(
+    'SELECT insightsJson, llmText, cachedAt FROM insights_cache WHERE cacheKey = ?',
+    [key]
+  );
+  if (!row) return null;
+  try {
+    return {
+      data: JSON.parse(row.insightsJson),
+      llmText: row.llmText || null,
+      cachedAt: row.cachedAt,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// insightsData: structured insights object; llmText: optional synthesized text.
+export async function saveInsightsCache(matchIndexes, side, mode, insightsData, llmText = null) {
+  const database = await initializeDb();
+  const key = buildInsightsCacheKey(matchIndexes, side, mode);
+  await database.runAsync(
+    `INSERT OR REPLACE INTO insights_cache (cacheKey, insightsJson, llmText, cachedAt) VALUES (?, ?, ?, ?)`,
+    [key, JSON.stringify(insightsData), llmText, new Date().toISOString()]
+  );
+}
+
+export async function clearInsightsCache(matchIndexes, side, mode) {
+  const database = await initializeDb();
+  const key = buildInsightsCacheKey(matchIndexes, side, mode);
+  await database.runAsync('DELETE FROM insights_cache WHERE cacheKey = ?', [key]);
 }
 
 // Overwrite points list for a match

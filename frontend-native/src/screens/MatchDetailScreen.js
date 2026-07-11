@@ -272,7 +272,7 @@ export default function MatchDetailScreen({ route, navigation }) {
             <Text style={styles.chartButtonText}>Chart Points</Text>
           </HapticButton>
 
-          <HapticButton 
+          <HapticButton
             onPress={() => navigation.navigate('Analysis', { matchIndex })}
             style={styles.analysisButton}
           >
@@ -280,6 +280,15 @@ export default function MatchDetailScreen({ route, navigation }) {
             <Text style={styles.analysisButtonText}>View Analysis</Text>
           </HapticButton>
         </View>
+
+        {/* Insights Report (new, additive) */}
+        <HapticButton
+          onPress={() => navigation.navigate('InsightsReport', { matchIndexes: [matchIndex], side: 'player1' })}
+          style={styles.insightsButton}
+        >
+          <Ionicons name="bulb-outline" size={20} color="#FFFFFF" />
+          <Text style={styles.insightsButtonText}>Insights Report</Text>
+        </HapticButton>
 
         {/* Match Metadata */}
         <Card style={styles.infoCard}>
@@ -519,6 +528,21 @@ const styles = StyleSheet.create({
   },
   analysisButtonText: {
     color: '#3B82F6',
+    fontWeight: '700',
+    fontSize: 14,
+    marginLeft: 8,
+  },
+  insightsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1E293B', // slate-800
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginBottom: 4,
+  },
+  insightsButtonText: {
+    color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 14,
     marginLeft: 8,

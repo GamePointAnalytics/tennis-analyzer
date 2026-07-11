@@ -16,7 +16,7 @@ The frontend is a native mobile app built using React Native and Expo, and the b
 
 ## Key Links
 
-**🌐 Project Website: [www.tennisanalyzer.app](https://www.tennisanalyzer.app/)**
+**🌐 Project Website: [gamepointanalytics.github.io/tennis-analyzer/](https://gamepointanalytics.github.io/tennis-analyzer/)**
 
 ### App Downloads
 - **Google Play Store**: [Download for Android](https://play.google.com/store/apps/details?id=com.appsheet.whitelabel.guid_3d2e670b_8bc7_4bf0_af4a_cf4108cfc997&pli=1)

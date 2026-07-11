@@ -5,4 +5,7 @@
 !appsscript.json
 
 # Allow backend source code
-!backend/src/**
+# NOTE: .claspignore patterns are evaluated relative to rootDir (backend/src),
+# so match the bare filenames there, not the backend/src/ prefix.
+!*.js
+!*.gs
