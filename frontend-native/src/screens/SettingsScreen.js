@@ -43,8 +43,8 @@ const MODEL_LISTS = {
     { key: 'qwen/qwen-3-max', label: 'Qwen 3 Max (CN)' },
     { key: 'z-ai/glm-5.2', label: 'GLM-5.2 (CN)' },
     // 2 American Open Source
-    { key: 'meta-llama/llama-4-maverick', label: 'Llama 4 Maverick (US)' },
-    { key: 'google/gemma-4-12b', label: 'Gemma 4 12B (US)' }
+    { key: 'meta-llama/llama-4-scout', label: 'Llama 4 Scout (US)' },
+    { key: 'google/gemma-4-31b-it', label: 'Gemma 4 31B (US)' }
   ]
 };
 
