@@ -32,16 +32,16 @@ async function callProvider(userPrompt) {
   
   if (provider === 'anthropic') {
     apiKey = settings.anthropicApiKey;
-    model = settings.anthropicModel || 'claude-sonnet-5';
+    model = settings.anthropicModel || 'claude-fable-5';
   } else if (provider === 'openai') {
     apiKey = settings.openaiApiKey;
-    model = settings.openaiModel || 'gpt-4o';
+    model = settings.openaiModel || 'gpt-5.6-sol';
   } else if (provider === 'gemini') {
     apiKey = settings.geminiApiKey;
-    model = settings.geminiModel || 'gemini-1.5-pro';
+    model = settings.geminiModel || 'gemini-3.5-flash';
   } else if (provider === 'openrouter') {
     apiKey = settings.openrouterApiKey;
-    model = settings.openrouterModel || 'deepseek/deepseek-chat';
+    model = settings.openrouterModel || 'deepseek/deepseek-v4-pro';
   }
 
   if (!apiKey) {

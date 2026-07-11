@@ -26,10 +26,10 @@ export const DEFAULT_AI_PROVIDER = 'anthropic';
 
 // Default model values
 export const DEFAULT_MODELS = {
-  anthropic: 'claude-sonnet-5',
-  openai: 'gpt-4o',
-  gemini: 'gemini-1.5-pro',
-  openrouter: 'deepseek/deepseek-chat'
+  anthropic: 'claude-fable-5',
+  openai: 'gpt-5.6-sol',
+  gemini: 'gemini-3.5-flash',
+  openrouter: 'deepseek/deepseek-v4-pro'
 };
 
 // Generate an 8-character hex user ID (e.g. "8fee48ab")

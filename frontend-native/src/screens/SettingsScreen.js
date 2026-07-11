@@ -16,33 +16,35 @@ import { syncPendingData } from '../utils/syncManager';
 
 const MODEL_LISTS = {
   anthropic: [
-    { key: 'claude-3-5-sonnet', label: 'Claude 3.5 Sonnet' },
-    { key: 'claude-3-opus', label: 'Claude 3 Opus' },
-    { key: 'claude-fable', label: 'Claude Fable' },
+    { key: 'claude-fable-5', label: 'Claude Fable 5' },
+    { key: 'claude-opus-4-8', label: 'Claude Opus 4.8' },
+    { key: 'claude-sonnet-5', label: 'Claude Sonnet 5' },
+    { key: 'claude-haiku-4-5', label: 'Claude Haiku 4.5' },
     { key: 'custom', label: 'Custom...' }
   ],
   openai: [
-    { key: 'gpt-4o', label: 'GPT-4o' },
-    { key: 'gpt-4o-mini', label: 'GPT-4o-mini' },
-    { key: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
+    { key: 'gpt-5.6-sol', label: 'GPT-5.6 Sol' },
+    { key: 'gpt-5.6-terra', label: 'GPT-5.6 Terra' },
+    { key: 'gpt-5.6-luna', label: 'GPT-5.6 Luna' },
+    { key: 'o4-mini', label: 'o4-mini' },
     { key: 'custom', label: 'Custom...' }
   ],
   gemini: [
-    { key: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash' },
-    { key: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
-    { key: 'gemini-3.5-flash-high', label: 'Gemini 3.5 Flash (high)' },
-    { key: 'gemini-3.5-flash-medium', label: 'Gemini 3.5 Flash (medium)' },
-    { key: 'gemini-3.5-flash-low', label: 'Gemini 3.5 Flash (low)' },
+    { key: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash' },
+    { key: 'gemini-3.1-pro', label: 'Gemini 3.1 Pro' },
+    { key: 'gemini-3.1-flash-lite', label: 'Gemini 3.1 Flash-Lite' },
+    { key: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
+    { key: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
     { key: 'custom', label: 'Custom...' }
   ],
   openrouter: [
     // 3 Chinese Open Source
-    { key: 'deepseek/deepseek-chat', label: 'DeepSeek Chat (CN)' },
-    { key: 'qwen/qwen-2.5-72b-instruct', label: 'Qwen 2.5 72B (CN)' },
+    { key: 'deepseek/deepseek-v4-pro', label: 'DeepSeek V4 Pro (CN)' },
+    { key: 'qwen/qwen-3-max', label: 'Qwen 3 Max (CN)' },
     { key: 'zhipu/glm-4-9b-chat', label: 'GLM-4 9B (CN)' },
     // 2 American Open Source
-    { key: 'meta-llama/llama-3.1-70b-instruct', label: 'Llama 3.1 70B (US)' },
-    { key: 'google/gemma-2-27b-it', label: 'Gemma 2 27B (US)' }
+    { key: 'meta-llama/llama-4-maverick', label: 'Llama 4 Maverick (US)' },
+    { key: 'google/gemma-4-12b', label: 'Gemma 4 12B (US)' }
   ]
 };
 
