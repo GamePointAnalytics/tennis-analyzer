@@ -1,289 +1,183 @@
 # Tennis Analyzer — Frequently Asked Questions
 
-This document contains answers to frequently asked questions about the **Tennis Analyzer** app, covering general questions, matches, points, analyses, and data privacy.
+This FAQ describes the current Tennis Analyzer mobile app. It records matches point by point, saves data locally first, synchronizes with the cloud, and produces statistical and optional AI-powered reports.
 
 ## Table of Contents
 
-- **[General Questions](#general-questions)**
-- [1. How to use this app?](#1-how-to-use-this-app)
-- [2. How can this app help me?](#2-how-can-this-app-help-me)
-- [3. What’s the difference between this app and similar ones?](#3-whats-the-difference-between-this-app-and-similar-ones)
-- [4. What is my user ID?](#4-what-is-my-user-id)
-- [5. How do I access my data from multiple devices?](#5-how-do-i-access-my-data-from-multiple-devices)
-- [6. Do I need internet access to use this app?](#6-do-i-need-internet-access-to-use-this-app)
-- [7. What is the best location around a court to chart a match?](#7-what-is-the-best-location-around-a-court-to-chart-a-match)
-- [8. Any tips on using this app?](#8-any-tips-on-using-this-app)
-- **[Matches](#matches)**
-- [9. How to add, edit, or delete a match?](#9-how-to-add-edit-or-delete-a-match)
-- [10. How to chart a match with no-ad scoring?](#10-how-to-chart-a-match-with-no-ad-scoring)
-- [11. Can I chart doubles matches?](#11-can-i-chart-doubles-matches)
-- **[Points](#points)**
-- [12. Do I have to enter scores for each point?](#12-do-i-have-to-enter-scores-for-each-point)
-- [13. Do I have to select the serving player for each point?](#13-do-i-have-to-select-the-serving-player-for-each-point)
-- [14. How to deal with service directions that are hard to classify?](#14-how-to-deal-with-service-directions-that-are-hard-to-classify)
-- [15. How to remember service directions?](#15-how-to-remember-service-directions)
-- [16. How to record an unreturnable service?](#16-how-to-record-an-unreturnable-service)
-- [17. Is there enough time to enter all the information in real time?](#17-is-there-enough-time-to-enter-all-the-information-in-real-time)
-- [18. What if I missed some points when charting a match?](#18-what-if-i-missed-some-points-when-charting-a-match)
-- [19. How to differentiate between unforced and forced errors?](#19-how-to-differentiate-between-unforced-and-forced-errors)
-- [20. How to properly record forced errors?](#20-how-to-properly-record-forced-errors)
-- [21. Should I include service as a shot in the rally count?](#21-should-i-include-service-as-a-shot-in-the-rally-count)
-- [22. How to edit or delete a point?](#22-how-to-edit-or-delete-a-point)
-- **[Analyses](#analyses)**
-- [23. Is the analysis report updated after every point?](#23-is-the-analysis-report-updated-after-every-point)
-- [24. Why is there so much information in the analysis report?](#24-why-is-there-so-much-information-in-the-analysis-report)
-- [25. How to read the analysis report?](#25-how-to-read-the-analysis-report)
-- [26. How do I email a match report?](#26-how-do-i-email-a-match-report)
-- [27. How do I regenerate an analysis report?](#27-how-do-i-regenerate-an-analysis-report)
-- [28. How do I delete an analysis report?](#28-how-do-i-delete-an-analysis-report)
-- **[Other questions](#other-questions)**
-- [29. Where is my data stored? Who has access?](#29-where-is-my-data-stored-who-has-access)
+- [General questions](#general-questions)
+- [Matches](#matches)
+- [Charting points](#charting-points)
+- [Analysis and insights](#analysis-and-insights)
+- [Data, sync, and privacy](#data-sync-and-privacy)
 
----
+## General questions
 
+### 1. What is Tennis Analyzer?
 
-## General Questions
+The app lets you capture detailed point-by-point data such as serve direction, serve outcome, last-shot type, last-shot hand, rally length, point outcome, shot classification, winner, score, and notes. This detailed data supports more in-depth analysis of serve patterns, rallies, errors, winners, pressure points, and other match performance factors.
 
+You can also send the match statistics to a supported AI model to generate additional insights, including strengths and weaknesses, performance diagnoses, and training recommendations.
 
-### 1. How to use this app?
+The app is useful for coaches, friends, or family members who want to chart a match in real time and provide immediate feedback or on-court coaching when the rules allow it. Players can use it to understand their own strengths and weaknesses, track progress across matches, identify patterns under pressure, and research an opponent's serve, rally, and scoring tendencies. Reviewing the data after a match can also help turn general impressions into specific practice goals and more focused coaching conversations.
 
-The Tennis Analyzer app is free. You do not need to register an account or sign in. The app will assign you a random user ID. You may watch our [demo video on YouTube](https://www.youtube.com/watch?v=mvU-U1Ide9c&list=PLOWn_l_C0ZNcxMyIoSh3n-Mafs30_fnuL&themeRefresh=1) or follow the steps below. Step 1: Go to the matches view and add a new match by selecting the + icon (Figure 1).
+### 2. Do I need an account or login?
 
+No. The app creates an eight-character hexadecimal User ID on the device. No username, password, or sign-in is required.
 
-![Figure 1 The matches view](images/figure_1.png)
-<p align="center"><em>Figure 1 The matches view</em></p>
+### 3. How do I start using the app?
 
-Enter the match information (Figure 2). You can change the match information at any time.
+1. On **Matches**, tap **+**.
+2. Enter both player names. Tournament, date, venue, scoring format, and notes are optional.
+3. Tap **Save Match**, open the match, and tap **Chart Points**.
+4. Enter the point information and tap **Save Point**.
+5. From **Match Detail**, choose **View Stats** or **AI Insights**.
 
+### 4. What can I enter for a point?
 
-![Figure 2 The match editor view](images/figure_2.jpeg)
-<p align="center"><em>Figure 2 The match editor view</em></p>
+You can record the serving player; first- and second-serve direction (**Wide**, **Body**, **T**) and outcome (**In**, **Out**, **Net**, **Let**, **Ace**); rally length; last-shot hand; last-shot type (**Serve**, **Volley**, **Slice**, **Smash**, **Drop**, **Lob**, **Pass**); shot result; classification (**Winner**, **Unforced Error**, **Forced Error**); and notes. The point winner is required; the other fields are optional.
 
-Step 2: Open the match and add a point (Figure 3).
+### 5. Where should I stand while charting?
 
-
-![Figure 3 The match detail view](images/figure_3.png)
-<p align="center"><em>Figure 3 The match detail view</em></p>
-
-In the point editor view (Figure 4), you may enter the following information.
-
-- First serve direction and outcome
-- Second serve direction and outcome
-- Shot count (rally length)
-- Last shot hand (forehand or backhand)
-- Last shot type (serve, volley, slice, overhead, dropshot, lob, or passing (shot))
-- Point outcome (out, net, or in)
-- Last shot classification (unforced error, winner, or forced error)
-- Who won the point? (required)
-
-![Figure 4 The point editor view](images/figure_4.jpeg)
-<p align="center"><em>Figure 4 The point editor view</em></p>
-
-You are only required to select the server for the first point and enter the winner of each point. The other information is optional. But the more data you provide, the more detailed the analysis will be. You need to concentrate on every point, and it does take a little practice to remember and enter all the data. But you will learn it quickly. The scores are automatically calculated based on the winner of each point. The server for each point is automatically selected based on the scores. In case you miss some points, you can manually correct the scores and select the server. You can also add notes to a point. You can edit or delete point data at any time. Step 3: Read the analysis report. You can open the analysis report from the match detail view (Figure 5) or the analysis view (Figure 6).
-
-
-![Figure 5 The analysis report in the match detail view](images/figure_5.png)
-<p align="center"><em>Figure 5 The analysis report in the match detail view</em></p>
-
-
-![Figure 6 The analysis view](images/figure_6.png)
-<p align="center"><em>Figure 6 The analysis view</em></p>
-
-The analysis report (Figure 7) contains many statistics about each player. Every time you enter or edit a point, the analysis is automatically updated on the Google Cloud and then synchronized with this mobile app. Each analysis update takes around 5 to 20 seconds. If you feel the analysis report is not up to date, wait for several seconds and press the refresh icon. You can add notes at the end of the report.
-
-
-![Figure 7 The analysis report](images/figure_7.png)
-<p align="center"><em>Figure 7 The analysis report</em></p>
-
-Step 4: Email the analysis report if necessary. Press the Email Report icon (Figure 8) to email the analysis report to yourself and/or someone else.
-
-
-![Figure 8 The Email Report icon in the analysis report](images/figure_8.png)
-<p align="center"><em>Figure 8 The Email Report icon in the analysis report</em></p>
-
-
-### 2. How can this app help me?
-
-This app is good for charting and analyzing tennis matches, particularly in real time. Detailed data analyses can help you understand each player’s strengths and weaknesses, serve patterns, and how the match is won or lost. If on-court coaching is allowed, this app can help provide instant feedback to your player.
-
-
-### 3. What’s the difference between this app and similar ones?
-
-First, this app is free. Second, I developed this app because I couldn’t find an app that provides the kind of details I need, such as serve direction patterns and server sequence patterns. When I play a match, I prefer to have someone chart the match in real-time and get detailed statistics. If on-court coaching is allowed, I get real-time feedback on myself and my opponent. When the match is over, I get an email of the match statistics so I can analyze it right away. I can also record a match and chart it later, but I rarely have time for that.
-
-Most similar apps do not provide enough statistics, or in some cases, they ask you to enter too much information that cannot be done during the short interval between two points.
-
-
-### 4. What is my user ID?
-
-In this app, you are identified by your user ID, and you only have access to the data associated with your ID. When the app first launches, it will automatically assign you an ID, a sequence of 8 random digits and letters. You can find your user ID (Figure 10) via the main dropdown menu on the upper left corner and select Settings (Figure 9).
-
-
-![Figure 9 Settings](images/figure_9.jpeg)
-<p align="center"><em>Figure 9 Settings</em></p>
-
-
-![Figure 10 User ID](images/figure_10.jpeg)
-<p align="center"><em>Figure 10 User ID</em></p>
-
-For privacy purposes, it’s better to use the default user ID. Although the generated ID is not strictly unique, it is sufficiently random as to be effectively unique for all practical uses within the app. The chance of a duplicate ID being generated is virtually zero. You may change the user ID but make sure it’s unique and private. Using your email as user ID may be risky because other people may know or guess your email address.
-
-
-### 5. How do I access my data from multiple devices?
-
-When you install this app on a new device or reinstall it on the same device, you will get a new user ID. Therefore, if you want to access your data from multiple devices, use the same user ID for all your installations.
-
-
-### 6. Do I need internet access to use this app?
-
-You need internet access to see the data analysis in real time because the analysis programs run on Google cloud. If you lose internet access, the input data will be stored on your phone and then synchronized with the cloud when the network is connected. Then you will see the updated analysis report.
-
-
-### 7. What is the best location around a court to chart a match?
-
-The best location is at an elevated place behind one of the players, like the typical camera location for tennis broadcastings. It’s easier to read serve directions from this location. If you chart in real time, it’s better to find a place without many distractions so you can concentrate throughout the match.
-
-
-### 8. Any tips on using this app?
-
-- Shorten long player names when you enter their names for a new match. If the names are too long, certain buttons will automatically become dropdown menus, slowing down your data entry. For example, instead of using “Felix Auger-Aliassime”, enter “Felix A” or something short.
-- You can hide the scores by unselecting the “scores” button in the “What do you need to enter?” section (Figure 11). The scores will still be automatically updated, but they will not be displayed, making the UI less crowded. If you need to edit the scores, turn it back on and make changes.
-
-![Figure 11 You can hide scores by unselecting the "scores" button.](images/figure_11.png)
-<p align="center"><em>Figure 11 You can hide scores by unselecting the "scores" button.</em></p>
-
+An elevated position behind one player is usually best because it makes serve direction easier to judge. Choose a location where you can concentrate and see the court clearly.
 
 ## Matches
 
+### 6. How do I create or edit a match?
 
-### 9. How to add, edit, or delete a match?
+Tap **+** to create a match. Player 1 and Player 2 are required. Tap the pencil icon on an existing match to edit it. **Advantage (Ad)** scoring is the default; switch it off for **No-Advantage (No-Ad)** scoring.
 
-You can add a match using the + icon in the match info view (Figure 1). To edit match information, select a match from the match info view and press the edit icon (Figure 3). To delete a match, select the trash can icon (Figure 3). When you delete a match, the related points and analysis will be deleted too.
+### 7. How do I delete a match?
 
+Tap the trash icon and confirm. The local match, its points, and the cloud record are removed when the cloud is reachable. Local deletion still occurs if the cloud is temporarily unavailable.
 
-### 10. How to chart a match with no-ad scoring?
+### 8. Can I record doubles matches?
 
-You can select ad or no-ad scoring when you enter the match information (see Figure 2).
+The app has two player fields and is designed primarily for singles. It can track a doubles score, but its player-by-player statistics are not designed for four players.
 
+### 9. Can I analyze several matches together?
 
-### 11. Can I chart doubles matches?
+Yes. On **Matches**, tap the selection icon, select the matches, and tap **Analyze**. This opens a combined AI Insights report.
 
-This app is designed primarily for singles matches. You can track the scores for doubles matches but the statistical analysis is not very suitable for doubles.
+## Charting points
 
+### 10. Are scores calculated automatically?
 
-## Points
+Yes. The app calculates point, game, set, and match scores from the selected winner and scoring format. It also carries the calculated server into the next point.
 
+### 11. What if I missed points or the score is wrong?
 
-### 12. Do I have to enter scores for each point?
+Tap the blue score banner in the point editor, choose **Adjust Match Score**, edit set, game, point, or tiebreak state, and tap **Apply Changes**. The adjustment becomes the starting score for the point you save.
 
-No, you don’t need to enter any scores if you have entered every point so far. The scores are automatically calculated based on the winner of each point. If you miss some points, you can manually correct the scores. If you make a mistake (for example, by selecting the wrong winner), you can select the point data and correct it. You can hide the scores to simplify the UI if you like.
+### 12. Do I need to select the server every time?
 
+Usually not. Change **Serving Player** manually when the automatic choice is wrong, especially after missed points or a score adjustment.
 
-### 13. Do I have to select the serving player for each point?
+### 13. How do I record an ace or double fault?
 
-No, you don’t need to select the server for each point if you have charted every point so far. The server is automatically selected based on the scores. You do need to select the server for the first point of the match if the default selection is wrong. If you miss some points, you can always select the server manually.
+For an ace, set the serve outcome to **Ace**. The app treats it as a one-shot point and selects the server as winner.
 
+For a double fault, set the first serve to **Out** or **Net**, then set the second serve to **Out** or **Net**. The app records a zero-shot rally and assigns the point to the receiver. Review the inferred winner before saving.
 
-### 14. How to deal with service directions that are hard to classify?
+### 14. How do I record an unreturnable serve?
 
-Sometimes it’s hard to tell because some services land somewhere between two directions. You will have to make a judgment call.
+Count the serve as shot 1 and the unsuccessful return as shot 2. Set last-shot type to **Serve** and normally classify the result as a **Forced Error** when the serve caused the miss.
 
+### 15. How should I classify forced and unforced errors?
 
-### 15. How to remember service directions?
+Use your best judgment. An error made with time and balance is generally unforced; an error caused by opponent pressure is generally forced. For a forced error, record the shot that caused the error—usually the point winner’s last shot—rather than the losing player’s miss.
 
-It might be hard to remember the service directions, particularly for long points. The way I do it is to repeat the serve direction when I count the shots. For example, if the service goes wide, I will count the shots as Y2, Y3, Y4, Y5, and so on. Therefore, at the end of each point, I still have the service direction. Similarly, I count T2, T3, T4, T5 for T serves, and B2, B3, B4, B5 for body serves. If you don’t count the number of shots, then you may have time to quickly enter the service direction right after the service, and then go back to watch the match.
+### 16. How should I count rally length?
 
+Count the serve as shot 1. An ace is one shot and an unreturnable serve is normally two shots. Use this convention consistently because rally length feeds the analysis.
 
-### 16. How to record an unreturnable service?
+### 17. How do I record a tiebreak?
 
-Set shot count to 2 and the last shot type to “serve” and last shot classification to “forced error” (Figure 12).
+When detected, the point editor shows **Tiebreak Active**. Choose **7-Point** or **10-Point (Super)**. If the history is incomplete, use **Tap to Adjust Score** to activate the tiebreak and set its starting score.
 
+### 18. How do I correct or undo a point?
 
-![Figure 12 Record an unreturnable serve](images/figure_12.jpeg)
-<p align="center"><em>Figure 12 Record an unreturnable serve</em></p>
+Tap a point in **Point History**, edit it, and tap **Update Point**. **Delete Point** removes it and recalculates subsequent scores. While adding points, the undo icon deletes the last charted point after confirmation.
 
+## Analysis and insights
 
-### 17. Is there enough time to enter all the information in real time?
+### 19. What is the Analysis Report?
 
-The 25-second interval between two points in professional matches is long enough to enter all the data. I have done this thousands of times. The between-the-points interval in amateur matches is usually longer. It gets easier with a little practice.
+**View Stats** opens the statistical report for one match. It includes calculated score, points won/lost, serve performance and patterns, rally and return statistics, high-pressure points, errors, winners, and histograms where available. Sections are expandable: **Overview & Match Score**, **Serve Performance**, **Rally & Return Stats**, **High Pressure Points**, and **Errors & Winners**.
 
+### 20. When is the Analysis Report updated?
 
-### 18. What if I missed some points when charting a match?
+It is generated by the cloud analysis service from synchronized point data. After adding or editing points, tap the report’s refresh icon. The report may be unavailable until synchronization completes.
 
-Don’t worry about it. Just keep going. But remember to manually set the correct score.
+### 21. How do I share a statistical report?
 
+Open **View Stats**, wait for it to load, and tap the share icon. The app creates a PDF and opens the device share sheet for supported apps such as email, messaging, or cloud storage.
 
-### 19. How to differentiate between unforced and forced errors?
+### 22. What is AI Insights?
 
-Identifying unforced and forced errors can be subjective. Just do your best. Generally, if the player has time and is in place to hit the ball, the error is often an unforced error. If the player struggles to get the ball, it’s a forced error.
+**AI Insights** analyzes one or more matches for a selected player. It can show serve patterns, strengths and weaknesses, baseline performance, net play, momentum and consistency, high-pressure performance, a win/loss diagnosis, and training recommendations. For one match, use the player toggle to switch between Player 1 and Player 2. Sections can be expanded or collapsed, and the report can be shared as a PDF.
 
-Unforced errors are not necessarily the result of inconsistency. Sometimes it is because the player is too aggressive.
+### 23. What are the AI Insights modes?
 
+Configure **Settings → Analysis & Insights**:
 
-### 20. How to properly record forced errors?
+- **Rules**: deterministic, instant, offline, and no API key required.
+- **Hybrid**: structured statistics plus AI-written diagnosis and recommendations; this is the default.
+- **LLM**: an AI-generated narrative report.
 
-For forced errors, I record the last shot from the point winner, not the last shot from the point loser. For example, if player A hits a good forehand and player B struggles to get the ball and hits it out with a backhand, I record “forehand” and “forced error” (Figure 13). As a result, the analysis program will record this forehand as a positive for player A.
+Without a key, Hybrid and LLM modes show the rules-based report and explain how to configure AI.
 
+### 24. Which AI providers are supported?
 
-![Figure 13 Record a forced error](images/figure_13.jpeg)
-<p align="center"><em>Figure 13 Record a forced error</em></p>
+Claude (Anthropic), GPT (OpenAI), Gemini (Google), and OpenRouter are supported. Choose a provider, enter its API key, select a listed model or enter a custom model identifier, and tap **Save AI Configuration**. Keys are stored in device secure storage and sent directly to the selected provider; they are not sent to the Tennis Analyzer cloud service.
 
+### 25. How do I set up AI analysis with an API key?
 
-### 21. Should I include service as a shot in the rally count?
+1. Open **Settings** from the Matches screen.
+2. Under **Analysis & Insights**, select **Hybrid** or **LLM** as the **Report Mode**.
+3. Choose an **AI Provider**: Claude, GPT, Gemini, or OpenRouter.
+4. Enter an API key issued by that provider.
+5. Select a listed model, or choose **Custom...** and enter the provider’s model identifier.
+6. Tap **Save AI Configuration** and wait for the saved confirmation.
+7. Return to a match and open **AI Insights**.
 
-Yes, that’s what I do. For example, an ace is 1 shot. An unreturnable serve consists of 2 shots. The app uses the shot count to identify unreturnable serves, among other things.
+Keys are saved in the device’s local secure storage. The app does not issue provider keys, and your AI provider may charge for API usage. If no key is configured, use **Rules** mode for an offline, rules-based report.
 
+### 26. How does the AI analysis work?
 
-### 22. How to edit or delete a point?
+When you open AI Insights, the app requests structured match insights from the Tennis Analyzer cloud service. It can analyze one match or several selected matches for the selected player, including serve direction, serve effectiveness, errors and winners, net play, momentum, consistency, and high-pressure performance.
 
-Select the point from the point list. Press the Edit icon to edit or the trash can icon to delete (Figure 14).
+In **Rules** mode, the app displays deterministic findings from those statistics and does not call an AI provider. In **Hybrid** mode, the structured findings are retained and the selected provider writes the diagnosis and recommendations. In **LLM** mode, the provider writes the full narrative report. Results are cached on the device; use the refresh icon to request updated data.
 
+If AI generation fails or no API key is available, the app falls back to the rules-based report where possible. A small sample can also cause an insight to be labeled insufficient or thin.
 
-![Figure 14 The point detail view](images/figure_14.png)
-<p align="center"><em>Figure 14 The point detail view</em></p>
+### 27. Why is an insight marked insufficient or thin?
 
+Some insights require enough relevant serves, pressure points, net points, or shots. When the sample is too small, the report avoids presenting a misleading conclusion. Chart more complete matches and refresh.
 
-## Analyses
+## Data, sync, and privacy
 
+### 28. Where is my data stored?
 
-### 23. Is the analysis report updated after every point?
+Match data and points are saved in a local SQLite database first. Pending data is uploaded to the configured Google Apps Script web app, which stores cloud data in Google Sheets and calculates the statistical analysis.
 
-Yes, the analysis program runs for every point. Every time a point is added or edited, the cloud-based analysis program is called automatically and asynchronously. The analysis takes 5 to 30 seconds to run, with the average time being around 10 seconds. Then the data is synchronized back to the app. In the meantime, you can keep entering data.
+### 29. Do I need internet access?
 
+Not for basic charting. Offline matches and points remain **Pending** until sync succeeds. Internet is required to upload/download cloud data and fetch the Analysis Report. AI Insights needs network access when uncached data or AI text must be retrieved.
 
-### 24. Why is there so much information in the analysis report?
+The app attempts sync when returning to the foreground, leaving point charting, pull-to-refresh, or tapping **Sync Unsaved Data** in Settings.
 
-I have tried similar apps and am dissatisfied with the amount of statistics they provide. That’s why I developed this app. My design principle is to enter as much information as possible in the time interval between two points, and then generate as much analysis as possible from the input data. I would rather show too much than too little. The display is organized in such a way that the most important data appears first for each section. You can just ignore the statistics you don’t need.
+### 30. How do I use my data on another device?
 
+Copy the User ID from **Settings** on the original device, enter it on the new device, tap **Save Changes**, then tap **Sync Unsaved Data**. Devices using the same ID share the same cloud match history.
 
-### 25. How to read the analysis report?
+Keep the ID private. **New ID** disconnects the device from the previous ID’s data unless you saved that ID.
 
-The analysis report shows various performance metrics and patterns. By reading an analysis report carefully, you can learn some interesting and unexpected things about yourself and your opponent. In general, these are the things you look for in a report.
+### 31. Is my data private?
 
-- Look for imbalances, anomalies, and outliers in the statistics. For example, player B’s ad side serve percentage is significantly lower than his deuce side serve percentage.
-- Look for patterns. For example, what is player A’s deuce side serve pattern?
-- Compare the statistics with your previous matches to see progress. For example, if your serve percentage on the ad side was too low in previous matches, have you improved in this match?
-- Compare your statistics with the opponents’. Who did better in which area?
-- Look for performance or behavior change under pressure. What is player A’s deuce side serve pattern under pressure? What is the player’s serve percentage under pressure? Please check out the sample analysis reports on our website.
+The app does not require a traditional login. Your User ID acts as the access key for your Tennis Analyzer cloud data, so keep it private and do not put sensitive information in player names, match notes, or point notes. Anyone with the User ID may be able to access the associated cloud data.
 
-### 26. How do I email a match report?
+Your AI API keys are stored locally on the device in secure storage and are not synchronized with the Tennis Analyzer backend. When you generate an AI report, the selected key is sent directly from the phone to the chosen AI provider over HTTPS for authentication. The Tennis Analyzer backend receives match statistics for analysis but does not receive your AI API key. The selected provider may bill you directly for AI usage.
 
-Open an analysis report and then press the Email Report icon (Figure 8).
+### 32. What do “Pending” and “Synced” mean?
 
-
-### 27. How do I regenerate an analysis report?
-
-The analysis is automatically generated when you enter or modify a point.
-
-
-### 28. How do I delete an analysis report?
-
-When you delete a match, the corresponding analysis report and all the related points are automatically deleted.
-
-
-## Other questions
-
-
-### 29. Where is my data stored? Who has access?
-
-The data is stored on Google Sheets and is not shared with any third party. Therefore, the app is syncing with the Google Sheets as you enter data. For privacy reasons, do not enter any sensitive information. Hide the players’ names if you like. You can change the name back when you email the reports.
+**Pending** means local changes still need uploading. **Synced** means the latest local match and point data was uploaded successfully. Pull down on the Matches list or use **Sync Unsaved Data** to retry.
