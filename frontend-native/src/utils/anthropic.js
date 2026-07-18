@@ -71,15 +71,20 @@ async function callProvider(userPrompt) {
         : 'https://openrouter.ai/api/v1/chat/completions';
       
       const isReasoning = model && /(^|\/)o\d/.test(model);
+      const useCompletionTokens = model && (
+        /(^|\/)o\d/.test(model) || 
+        /gpt-5/.test(model) || 
+        /r1/.test(model)
+      );
       const requestBody = {
         model: model,
         messages: [
-          { role: isReasoning ? 'developer' : 'system', content: SYSTEM_PROMPT },
+          { role: (isReasoning || /gpt-5/.test(model)) ? 'developer' : 'system', content: SYSTEM_PROMPT },
           { role: 'user', content: userPrompt }
         ],
       };
       
-      if (isReasoning) {
+      if (useCompletionTokens) {
         requestBody.max_completion_tokens = 4096;
       } else {
         requestBody.max_tokens = 4096;
