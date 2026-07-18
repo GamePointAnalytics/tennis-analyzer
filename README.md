@@ -38,6 +38,21 @@ The frontend is a native mobile app built using React Native and Expo, and the b
 - **[Brandon Holt vs Mikael Torpegaard](docs/holt_torpegaard.pdf)** (2018 NCAA, USC vs Ohio State)
 - **[Mackenzie McDonald vs Yannick Hanfmann](docs/mcdonald_hanfmann.pdf)** (2015 NCAA, UCLA vs USC)
 
+### AI Insights
+
+Detailed AI-generated insights and analysis for key matches:
+
+- **[Carlos Alcaraz vs Jannik Sinner - AI Insights](docs/alcaraz_ai_insight.pdf)**
+- **[Stefanos Tsitsipas vs Novak Djokovic - AI Insights](docs/tsitsipas_ai_insight.pdf)**
+- **[Rafael Nadal vs Roger Federer - AI Insights](docs/nadal_ai_insight.pdf)**
+- **[Iga Swiatek vs Elena Rybakina - AI Insights](docs/swiatek_ai_insight.pdf)**
+- **[Ash Barty vs Danielle Collins - AI Insights](docs/collins_ai_insight.pdf)**
+- **[Ash Barty vs Elena Rybakina - AI Insights](docs/barty_ai_insight.pdf)**
+- **[Elena Rybakina - AI Insights](docs/rybakina_ai_insight.pdf)**
+- **[Jannik Sinner - AI Insights](docs/sinner_ai_insight.pdf)**
+- **[Roger Federer - AI Insights](docs/federer_ai_insight.pdf)**
+- **[Rafael Nadal - AI Insights](docs/nadal_ai_insight.pdf)**
+
 ### User Metrics
 - 500+ downloads, 80+ installed audience, and 30-40 monthly active users
 
