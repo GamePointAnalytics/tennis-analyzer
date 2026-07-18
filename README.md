@@ -39,7 +39,7 @@ The frontend is a native mobile app built using React Native and Expo, and the b
 - **[Mackenzie McDonald vs Yannick Hanfmann](docs/mcdonald_hanfmann.pdf)** (2015 NCAA, UCLA vs USC)
 
 ### User Metrics
-- 500+ downloads, 80+ installed audience, and 30-40 monthly active users (50% monthly retention rate)
+- 500+ downloads, 80+ installed audience, and 30-40 monthly active users
 
 ---
 
