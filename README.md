@@ -22,25 +22,24 @@ The frontend is a native mobile app built using React Native and Expo, and the b
 - **Google Play Store**: [Download for Android](https://play.google.com/store/apps/details?id=com.appsheet.whitelabel.guid_3d2e670b_8bc7_4bf0_af4a_cf4108cfc997&pli=1)
 
 ### Documentation & Tutorials
-- **[FAQ Document](https://drive.google.com/file/d/1ksvGkEp_h0D6yQCXZMD_n9KelNtJHkeT/view?usp=sharing)** - Frequently Asked Questions
-- **[Demo Videos](https://www.youtube.com/watch?v=mvU-U1Ide9c&list=PLOWn_l_C0ZNcxMyIoSh3n-Mafs30_fnuL)** - Tutorial playlist on YouTube
+- **[FAQ.pdf](docs/FAQ.pdf)** - Frequently Asked Questions
 
 ### Sample Reports
 
 #### Professional Matches
-- **[Carlos Alcaraz vs Jannik Sinner](https://drive.google.com/file/d/1ndOtM3lTX_YPm3UOotKpLO8nsE5qp9-4/view?usp=sharing)** (2022 US Open QF) - [Video](https://www.youtube.com/watch?v=XNYhoYjRs3Y)
-- **[Stefanos Tsitsipas vs Novak Djokovic](https://drive.google.com/file/d/16dOVhhdaptvimsFMDeMQv4UxxDVJm6b2/view?usp=sharing)** (2023 Australian Open Final) - [Video](https://www.youtube.com/watch?v=FE2or3g488o)
-- **[Rafael Nadal vs Roger Federer](https://drive.google.com/file/d/1hENgaSBtbljWQIlzA9T5F4jiZ43-uQzl/view?usp=sharing)** (2017 Australian Open Final) - [Video](https://www.youtube.com/watch?v=KTCDxjJvs2U)
-- **[Iga Swiatek vs Elena Rybakina](https://drive.google.com/file/d/1esy4ak5xjFLhJP3UxVa1tYd-ONBZvssj/view?usp=sharing)** (2023 Australian Open 4R) - [Video](https://www.youtube.com/watch?v=87gmYTBO2bo)
-- **[Ash Barty vs Danielle Collins](https://drive.google.com/file/d/1udB_JsvspXekT6l5fgatR6S450-rJn7a/view?usp=sharing)** (2022 Australian Open Final) - [Video](https://www.youtube.com/watch?v=xqYKxmGc1Ys)
-- **[Ash Barty vs Elena Rybakina](https://drive.google.com/file/d/1QoUvf5QmgSl7Woraahyta51AHTYxvkM2/view?usp=sharing)** (2022 WTA Adelaide Final) - [Video](https://www.youtube.com/watch?v=DfcNpzZIGNI)
+- **[Carlos Alcaraz vs Jannik Sinner](docs/alcaraz_sinner.pdf)** (2022 US Open QF)
+- **[Stefanos Tsitsipas vs Novak Djokovic](docs/tsitsipas_djokovic.pdf)** (2023 Australian Open Final)
+- **[Rafael Nadal vs Roger Federer](docs/nadal_federer.pdf)** (2017 Australian Open Final)
+- **[Iga Swiatek vs Elena Rybakina](docs/swiatek_rybakina.pdf)** (2023 Australian Open 4R)
+- **[Ash Barty vs Danielle Collins](docs/barty_collins.pdf)** (2022 Australian Open Final)
+- **[Ash Barty vs Elena Rybakina](docs/barty_rybakina.pdf)** (2022 WTA Adelaide Final)
 
 #### College Matches
-- **[Brandon Holt vs Mikael Torpegaard](https://drive.google.com/file/d/16Qto0gOTODd8t7b5BcjBdDH-d4s4tQZ7/view?usp=sharing)** (2018 NCAA, USC vs Ohio State) - [Video](https://www.youtube.com/watch?v=L8YuaXvZIe4)
-- **[Mackenzie McDonald vs Yannick Hanfmann](https://drive.google.com/file/d/1hfnaGkuQXVZwtP6AM16P4Xt4PuPkJy_z/view?usp=sharing)** (2015 NCAA, UCLA vs USC) - [Video](https://www.youtube.com/watch?v=eVN2s3fvjfY)
+- **[Brandon Holt vs Mikael Torpegaard](docs/holt_torpegaard.pdf)** (2018 NCAA, USC vs Ohio State)
+- **[Mackenzie McDonald vs Yannick Hanfmann](docs/mcdonald_hanfmann.pdf)** (2015 NCAA, UCLA vs USC)
 
 ### User Metrics
-- 300+ downloads, 70 installed audience, and 30-40 monthly active users (50% monthly retention rate)
+- 500+ downloads, 80+ installed audience, and 30-40 monthly active users (50% monthly retention rate)
 
 ---
 
