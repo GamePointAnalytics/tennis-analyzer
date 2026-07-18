@@ -69,20 +69,29 @@ async function callProvider(userPrompt) {
       const endpoint = provider === 'openai' 
         ? 'https://api.openai.com/v1/chat/completions'
         : 'https://openrouter.ai/api/v1/chat/completions';
+      
+      const isReasoning = model && /(^|\/)o\d/.test(model);
+      const requestBody = {
+        model: model,
+        messages: [
+          { role: isReasoning ? 'developer' : 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userPrompt }
+        ],
+      };
+      
+      if (isReasoning) {
+        requestBody.max_completion_tokens = 4096;
+      } else {
+        requestBody.max_tokens = 4096;
+      }
+
       response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
           'Authorization': `Bearer ${apiKey}`,
         },
-        body: JSON.stringify({
-          model: model,
-          max_tokens: 4096,
-          messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
-            { role: 'user', content: userPrompt }
-          ],
-        }),
+        body: JSON.stringify(requestBody),
       });
     } else if (provider === 'gemini') {
       response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {

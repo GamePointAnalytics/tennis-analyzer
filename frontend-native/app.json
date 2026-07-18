@@ -16,7 +16,7 @@
     },
     "android": {
       "package": "com.appsheet.whitelabel.guid_3d2e670b_8bc7_4bf0_af4a_cf4108cfc997",
-      "versionCode": 6,
+      "versionCode": 7,
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/android-icon-foreground.png",
