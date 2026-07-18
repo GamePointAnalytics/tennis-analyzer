@@ -40,16 +40,16 @@ The frontend is a native mobile app built using React Native and Expo, and the b
 
 ### AI Insights
 
-Detailed AI-generated insights and analysis for key matches:
+Detailed AI-generated insights and analysis for individual players:
 
-- **[Carlos Alcaraz vs Jannik Sinner - AI Insights](docs/alcaraz_ai_insight.pdf)**
-- **[Rafael Nadal vs Roger Federer - AI Insights](docs/nadal_ai_insight.pdf)**
-- **[Iga Swiatek vs Elena Rybakina - AI Insights](docs/swiatek_ai_insight.pdf)**
-- **[Ash Barty vs Danielle Collins - AI Insights](docs/collins_ai_insight.pdf)**
-- **[Ash Barty vs Elena Rybakina - AI Insights](docs/barty_ai_insight.pdf)**
+- **[Carlos Alcaraz - AI Insights](docs/alcaraz_ai_insight.pdf)**
+- **[Ash Barty - AI Insights](docs/barty_ai_insight.pdf)**
+- **[Danielle Collins - AI Insights](docs/collins_ai_insight.pdf)**
+- **[Roger Federer - AI Insights](docs/federer_ai_insight.pdf)**
+- **[Rafael Nadal - AI Insights](docs/nadal_ai_insight.pdf)**
 - **[Elena Rybakina - AI Insights](docs/rybakina_ai_insight.pdf)**
 - **[Jannik Sinner - AI Insights](docs/sinner_ai_insight.pdf)**
-- **[Roger Federer - AI Insights](docs/federer_ai_insight.pdf)**
+- **[Iga Swiatek - AI Insights](docs/swiatek_ai_insight.pdf)**
 
 ### User Metrics
 - 500+ downloads, 80+ installed audience, and 30-40 monthly active users
