@@ -52,7 +52,7 @@ Detailed AI-generated insights and analysis for individual players:
 - **[Iga Swiatek - AI Insights](docs/swiatek_ai_insight.pdf)**
 
 ### User Metrics
-- 500+ downloads, 80+ installed audience, and 30-40 monthly active users
+- 490+ downloads, 80+ installed audience, and 30-40 monthly active users
 
 ---
 
