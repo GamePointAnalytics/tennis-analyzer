@@ -22,7 +22,7 @@ The frontend is a native mobile app built using React Native and Expo, and the b
 - **Google Play Store**: [Download for Android](https://play.google.com/store/apps/details?id=com.appsheet.whitelabel.guid_3d2e670b_8bc7_4bf0_af4a_cf4108cfc997&pli=1)
 
 ### Documentation & Tutorials
-- **[FAQ.pdf](docs/FAQ.pdf)** - Frequently Asked Questions
+- **[FAQ.pdf](FAQ.pdf)** - Frequently Asked Questions
 
 ### Sample Reports
 
