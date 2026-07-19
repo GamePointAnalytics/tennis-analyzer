@@ -44,9 +44,11 @@ An elevated position behind one player is usually best because it makes serve di
 
 ### 6. How do I create or edit a match?
 
-Tap **+** to create a match. Player 1 and Player 2 are required. Tap the pencil icon on an existing match to edit it. **Advantage (Ad)** scoring is the default; switch it off for **No-Advantage (No-Ad)** scoring.
+Tap **+** to create a match. Player 1 and Player 2 are required. Tap the pencil icon on an existing match to edit it. **Advantage (Ad)** scoring is the default; switch it off for **No-Advantage (No-Ad)** scoring. The match detail screen is shown in **Figure 1**.
 
 <img src="images/match_detail.jpg" width="300">
+
+*Figure 1. Match detail screen.*
 
 ### 7. How do I delete a match?
 
@@ -64,10 +66,14 @@ Yes. On **Matches**, tap the selection icon, select the matches, and tap **Analy
 
 ### 10. Are scores calculated automatically?
 
-Yes. The app calculates point, game, set, and match scores from the selected winner and scoring format. It also carries the calculated server into the next point.
+Yes. The app calculates point, game, set, and match scores from the selected winner and scoring format. It also carries the calculated server into the next point, as shown in **Figures 2 and 3**.
 
 <img src="images/point_charting_1.jpg" width="300">
 <img src="images/point_charting_2.jpg" width="300">
+
+*Figure 2. Point charting screen.*
+
+*Figure 3. Point entry options.*
 
 ### 11. What if I missed points or the score is wrong?
 
@@ -101,18 +107,24 @@ When detected, the point editor shows **Tiebreak Active**. Choose **7-Point** or
 
 ### 18. How do I correct or undo a point?
 
-Tap a point in **Point History**, edit it, and tap **Update Point**. **Delete Point** removes it and recalculates subsequent scores. While adding points, the undo icon deletes the last charted point after confirmation.
+Tap a point in **Point History**, edit it, and tap **Update Point**. **Delete Point** removes it and recalculates subsequent scores. While adding points, the undo icon deletes the last charted point after confirmation. The point history view is shown in **Figure 4**.
 
 <img src="images/point_history.jpg" width="300">
+
+*Figure 4. Point history view.*
 
 ## Analysis and insights
 
 ### 19. What is the Analysis Report?
 
-**View Stats** opens the statistical report for one match. It includes calculated score, points won/lost, serve performance and patterns, rally and return statistics, high-pressure points, errors, winners, and histograms where available. Sections are expandable: **Overview & Match Score**, **Serve Performance**, **Rally & Return Stats**, **High Pressure Points**, and **Errors & Winners**.
+**View Stats** opens the statistical report for one match. It includes calculated score, points won/lost, serve performance and patterns, rally and return statistics, high-pressure points, errors, winners, and histograms where available. Sections are expandable: **Overview & Match Score**, **Serve Performance**, **Rally & Return Stats**, **High Pressure Points**, and **Errors & Winners**, as shown in **Figures 5 and 6**.
 
 <img src="images/analysis_report_1.jpg" width="300">
 <img src="images/analysis_report_2.jpg" width="300">
+
+*Figure 5. Analysis report overview.*
+
+*Figure 6. Analysis report details.*
 
 ### 20. When is the Analysis Report updated?
 
@@ -124,10 +136,14 @@ Open **View Stats**, wait for it to load, and tap the share icon. The app create
 
 ### 22. What is AI Insights?
 
-**AI Insights** analyzes one or more matches for a selected player. It can show serve patterns, strengths and weaknesses, baseline performance, net play, momentum and consistency, high-pressure performance, a win/loss diagnosis, and training recommendations. For one match, use the player toggle to switch between Player 1 and Player 2. Sections can be expanded or collapsed, and the report can be shared as a PDF.
+**AI Insights** analyzes one or more matches for a selected player. It can show serve patterns, strengths and weaknesses, baseline performance, net play, momentum and consistency, high-pressure performance, a win/loss diagnosis, and training recommendations. For one match, use the player toggle to switch between Player 1 and Player 2. Sections can be expanded or collapsed, and the report can be shared as a PDF. Example report views appear in **Figures 7 and 8**.
 
 <img src="images/ai_insight_1.jpg" width="300">
 <img src="images/ai_insight_2.jpg" width="300">
+
+*Figure 7. AI Insights summary.*
+
+*Figure 8. AI Insights recommendations.*
 
 ### 23. What are the AI Insights modes?
 
@@ -153,9 +169,13 @@ Claude (Anthropic), GPT (OpenAI), Gemini (Google), and OpenRouter are supported.
 6. Tap **Save AI Configuration** and wait for the saved confirmation.
 7. Return to a match and open **AI Insights**.
 
-Keys are saved in the device’s local secure storage. The app does not issue provider keys, and your AI provider may charge for API usage. If no key is configured, use **Rules** mode for an offline, rules-based report.
+Keys are saved in the device’s local secure storage. The app does not issue provider keys, and your AI provider may charge for API usage. If no key is configured, use **Rules** mode for an offline, rules-based report. The relevant settings screens are shown in **Figures 9 and 10**.
 <img src="images/setting_1.jpg" width="300">
 <img src="images/setting_2.jpg" width="300">
+
+*Figure 9. General settings screen.*
+
+*Figure 10. AI configuration settings.*
 ### 26. How does the AI analysis work?
 
 When you open AI Insights, the app requests structured match insights from the Tennis Analyzer cloud service. It can analyze one match or several selected matches for the selected player, including serve direction, serve effectiveness, errors and winners, net play, momentum, consistency, and high-pressure performance.
