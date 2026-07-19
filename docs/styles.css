@@ -190,11 +190,11 @@ body {
 /* ==================== Hero Section ==================== */
 .hero {
     position: relative;
-    min-height: 100vh;
+    min-height: 70vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: var(--spacing-2xl) 0;
+    padding: var(--spacing-lg) 0;
     overflow: hidden;
 }
 
@@ -243,7 +243,7 @@ body {
 .hero-title {
     font-size: clamp(2.5rem, 6vw, 4.5rem);
     font-weight: 800;
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
     background: linear-gradient(135deg, #FFFFFF 0%, var(--primary-light) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -255,7 +255,7 @@ body {
 .hero-subtitle {
     font-size: clamp(1.25rem, 3vw, 1.75rem);
     color: var(--text-secondary);
-    margin-bottom: var(--spacing-xl);
+    margin-bottom: var(--spacing-md);
     font-weight: 300;
     font-style: italic;
     animation: fadeInUp 0.8s ease 0.2s backwards;
@@ -264,8 +264,8 @@ body {
 .hero-features {
     display: flex;
     justify-content: center;
-    gap: var(--spacing-xl);
-    margin-bottom: var(--spacing-xl);
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
     flex-wrap: wrap;
     animation: fadeInUp 0.8s ease 0.4s backwards;
 }
