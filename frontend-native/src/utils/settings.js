@@ -24,12 +24,16 @@ export const DEFAULT_ANALYSIS_MODE = 'hybrid';
 export const AI_PROVIDERS = ['anthropic', 'openai', 'gemini', 'openrouter'];
 export const DEFAULT_AI_PROVIDER = 'anthropic';
 
-// Default model values
+// Default model values — smallest/cheapest tier per provider. AI modes now
+// only rephrase pre-computed data (see anthropic.js), so a large model buys
+// nothing; a small, literal model is both cheaper and less prone to
+// "helpfully" elaborating past what it was given. Users who explicitly pick a
+// bigger model in Settings are unaffected.
 export const DEFAULT_MODELS = {
-  anthropic: 'claude-fable-5',
-  openai: 'gpt-5.6-sol',
-  gemini: 'gemini-3.5-flash',
-  openrouter: 'deepseek/deepseek-v4-pro'
+  anthropic: 'claude-haiku-4-5',
+  openai: 'o4-mini',
+  gemini: 'gemini-3.1-flash-lite',
+  openrouter: 'google/gemma-4-31b-it'
 };
 
 // Generate an 8-character hex user ID (e.g. "8fee48ab")

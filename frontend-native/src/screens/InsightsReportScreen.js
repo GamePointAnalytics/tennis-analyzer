@@ -16,7 +16,7 @@ import HapticButton from '../components/HapticButton';
 import Card from '../components/Card';
 import { getSettings } from '../utils/settings';
 import { fetchInsightsFromCloud } from '../utils/api';
-import { synthesizeDiagnosis, writeFullReport } from '../utils/anthropic';
+import { synthesizeDiagnosis, writeFullReport, validateNumericCitations, buildSourceText } from '../utils/anthropic';
 import {
   getInsightsCache,
   saveInsightsCache,
@@ -110,6 +110,12 @@ export default function InsightsReportScreen({ route, navigation }) {
           synthesized = (currentMode === 'llm')
             ? await writeFullReport(data, currentKey)
             : await synthesizeDiagnosis(data, currentKey);
+          // The API call succeeded, but if it cited a number that doesn't trace
+          // back to the pre-computed data we sent it, fall back silently (no
+          // alert — this is a quality gate, not an error the user can act on).
+          if (!validateNumericCitations(synthesized, buildSourceText(data, currentMode))) {
+            synthesized = null;
+          }
           setLlmText(synthesized);
         } catch (e) {
           // LLM failure is non-fatal — fall back to deterministic Q7/Q8.
