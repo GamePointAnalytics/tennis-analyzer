@@ -75,7 +75,7 @@ export async function syncPointsToCloud(matchIndex, pointsList, player1Name, pla
     return {
       "user":                   pt.user || matchUser || "",
       "match index":            pt.matchIndex,
-      "server":                 pt.server === 'player1' ? player1Name : pt.server === 'player2' ? player2Name : "",
+      "server":                 pt.server === 'player1' ? player1Name : pt.server === 'player2' ? player2Name : (pt.server || ""),
       "first serve direction":  pt.firstServeDirection || "",
       "first serve outcome":    pt.firstServeOutcome || "",
       "second serve direction": pt.secondServeDirection || "",
@@ -85,7 +85,7 @@ export async function syncPointsToCloud(matchIndex, pointsList, player1Name, pla
       "last shot type":         pt.lastShotType || "",
       "outcome":                pt.outcome || "",
       "outcome type":           pt.outcomeType || "",
-      "winner":                 pt.winner === 'player1' ? player1Name : pt.winner === 'player2' ? player2Name : "",
+      "winner":                 pt.winner === 'player1' ? player1Name : pt.winner === 'player2' ? player2Name : (pt.winner || ""),
       "ad scoring":             pt.adScoring || matchAdScoring || "ad",
       "date":                   dateStr,
       "time":                   timeStr,

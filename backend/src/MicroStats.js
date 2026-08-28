@@ -41,6 +41,29 @@ function getColumnNumber(columnName, sheetName) {
   return headerRow.indexOf(columnName);
 }
 
+/**
+ * Robustly match a player identifier (which might be a full name, a last name,
+ * or a remapped key) against the two known player names for a match.
+ * Returns 1 for player1, 2 for player2, or 0 if unrecognized.
+ */
+function robustMatch(val, p1Name, p2Name) {
+  if (!val) return 0;
+  var v = String(val).toLowerCase().trim();
+  var n1 = String(p1Name).toLowerCase().trim();
+  var n2 = String(p2Name).toLowerCase().trim();
+
+  // 1. Direct match
+  if (v === n1 || v === 'player1' || v === 'subject') return 1;
+  if (v === n2 || v === 'player2' || v === 'opponent') return 2;
+
+  // 2. Fuzzy match (one contains the other)
+  // Check if val is a component of n1 (e.g. "Tsitsipas" matches "Stefanos Tsitsipas")
+  if (n1.indexOf(v) !== -1 || v.indexOf(n1) !== -1) return 1;
+  if (n2.indexOf(v) !== -1 || v.indexOf(n2) !== -1) return 2;
+
+  return 0;
+}
+
 // This function is called when the "points" sheet is changed
 function onPointChange(matchIndex) {
   // Get the active sheet and range
@@ -684,6 +707,19 @@ function updateStatistics(rows, matchIndex) {
 
   for (var i = 0; i < rows.length; i++) {
 
+    var p1Name = rows[i][player1ColumnNumberPoints];
+    var p2Name = rows[i][player2ColumnNumberPoints];
+    var serverName = rows[i][serverColumnNumberPoints];
+    var winnerName = rows[i][winnerColumnNumberPoints];
+
+    var serverRes = robustMatch(serverName, p1Name, p2Name);
+    var winnerRes = robustMatch(winnerName, p1Name, p2Name);
+
+    var isP1Serving = (serverRes === 1);
+    var isP2Serving = (serverRes === 2);
+    var isP1Winner = (winnerRes === 1);
+    var isP2Winner = (winnerRes === 2);
+
     if (i > 0) {
       // Identify the start of a new game.
 
@@ -766,7 +802,7 @@ function updateStatistics(rows, matchIndex) {
     if ((rows[i][firstServeOutcomeColumnNumberPoints] == "in") ||
       (rows[i][firstServeOutcomeColumnNumberPoints] == "ace")) {
       // First serve is in
-      if (rows[i][serverColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+      if (isP1Serving) {
         player1FirstServeInCount++;
 
         if (serveSide == 1) {
@@ -775,7 +811,7 @@ function updateStatistics(rows, matchIndex) {
           player1FirstServeAdSideInCount++;
         }
 
-        if (rows[i][winnerColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+        if (isP1Winner) {
           // Player1 is the server and winner
           player1FirstServeWonCount++;
 
@@ -786,7 +822,7 @@ function updateStatistics(rows, matchIndex) {
           }
 
         }
-      } else if (rows[i][serverColumnNumberPoints] == rows[i][player2ColumnNumberPoints]) {
+      } else if (isP2Serving) {
         player2FirstServeInCount++;
 
         if (serveSide == 1) {
@@ -795,7 +831,7 @@ function updateStatistics(rows, matchIndex) {
           player2FirstServeAdSideInCount++;
         }
 
-        if (rows[i][winnerColumnNumberPoints] == rows[i][player2ColumnNumberPoints]) {
+        if (isP2Winner) {
           // Player2 is the server and winner
           player2FirstServeWonCount++;
 
@@ -808,7 +844,7 @@ function updateStatistics(rows, matchIndex) {
       }
     } else {
       // first serve fault
-      if (rows[i][serverColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+      if (isP1Serving) {
         // Player1 was serving
         player1SecondServeCount++;
 
@@ -820,7 +856,7 @@ function updateStatistics(rows, matchIndex) {
           player1SecondServeAdSideCount++;
         }
 
-        if (rows[i][winnerColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+        if (isP1Winner) {
           // Player1 was the server and winner
           player1SecondServeWonCount++;
 
@@ -894,7 +930,7 @@ function updateStatistics(rows, matchIndex) {
           player2SecondServeAdSideCount++;
         }
 
-        if (rows[i][winnerColumnNumberPoints] == rows[i][player2ColumnNumberPoints]) {
+        if (isP2Winner) {
           // Player1 was the server and winner
           player2SecondServeWonCount++;
 
@@ -962,7 +998,7 @@ function updateStatistics(rows, matchIndex) {
 
     if ((rows[i][firstServeOutcomeColumnNumberPoints] === "ace") ||
       (rows[i][secondServeOutcomeColumnNumberPoints] === "ace")) {
-      if (rows[i][serverColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+      if (isP1Serving) {
         player1AceCount++;
 
         player1AceHistogram[player1AceHistogram.length - 1]++;
@@ -1025,7 +1061,7 @@ function updateStatistics(rows, matchIndex) {
       (rows[i][firstServeOutcomeColumnNumberPoints] == "net")) &&
       ((rows[i][secondServeOutcomeColumnNumberPoints] == "out") ||
         (rows[i][secondServeOutcomeColumnNumberPoints] == "net"))) {
-      if (rows[i][serverColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+      if (isP1Serving) {
         player1DoubleFaultCount++;
 
         player1DoubleFaultHistogram[player1DoubleFaultHistogram.length - 1]++;
@@ -1041,7 +1077,7 @@ function updateStatistics(rows, matchIndex) {
         } else if (rows[i][secondServeOutcomeColumnNumberPoints] == "out") {
           player1DoubleFaultOutCount++;
         }
-      } else {
+      } else if (isP2Serving) {
         player2DoubleFaultCount++;
 
         player2DoubleFaultHistogram[player2DoubleFaultHistogram.length - 1]++;
@@ -1064,7 +1100,7 @@ function updateStatistics(rows, matchIndex) {
     if (rows[i][rallyLengthColumnNumberPoints] == 2) {
 
       var player1Serving = false;
-      if (rows[i][serverColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+      if (isP1Serving) {
         player1Serving = true;
       }
 
@@ -1114,7 +1150,7 @@ function updateStatistics(rows, matchIndex) {
     if (rows[i][rallyLengthColumnNumberPoints] == 3) {
 
       var player1Serving = false;
-      if (rows[i][serverColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+      if (isP1Serving) {
         player1Serving = true;
       }
 
@@ -1144,7 +1180,7 @@ function updateStatistics(rows, matchIndex) {
       }
     }
 
-    if (rows[i][serverColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+    if (isP1Serving) {
       player1FirstServeCount++;
 
       if (serveSide == 1) {
@@ -1163,13 +1199,13 @@ function updateStatistics(rows, matchIndex) {
     }
 
     if (newGame && (gameCount > 2)) {
-      if (rows[i][serverColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+      if (isP1Serving) {
         // Player1 is serving this new game.
         player1FirstServeDeuceSidePattern += ", ";
         player1FirstServeAdSidePattern += ", ";
         player1SecondServeDeuceSidePattern += ", ";
         player1SecondServeAdSidePattern += ", ";
-      } else if (rows[i][serverColumnNumberPoints] == rows[i][player2ColumnNumberPoints]) {
+      } else if (isP2Serving) {
         // Player2 is serving this game. 
         player2FirstServeDeuceSidePattern += ", ";
         player2FirstServeAdSidePattern += ", ";
@@ -1179,7 +1215,7 @@ function updateStatistics(rows, matchIndex) {
     }
 
     if (rows[i][firstServeDirColumnNumberPoints] == "wide") {
-      if (rows[i][serverColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+      if (isP1Serving) {
         player1FirstServeWideCount++;
 
         if (serveSide == 1) {
@@ -1206,7 +1242,7 @@ function updateStatistics(rows, matchIndex) {
         }
       }
     } else if (rows[i][firstServeDirColumnNumberPoints] == "body") {
-      if (rows[i][serverColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+      if (isP1Serving) {
         player1FirstServeBodyCount++;
 
         if (serveSide == 1) {
@@ -1234,7 +1270,7 @@ function updateStatistics(rows, matchIndex) {
 
       }
     } else if (rows[i][firstServeDirColumnNumberPoints] == "t") {
-      if (rows[i][serverColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+      if (isP1Serving) {
         player1FirstServeTCount++;
 
         if (serveSide == 1) {
@@ -1263,7 +1299,7 @@ function updateStatistics(rows, matchIndex) {
     }
 
     if (rows[i][secondServeDirColumnNumberPoints] == "wide") {
-      if (rows[i][serverColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+      if (isP1Serving) {
         player1SecondServeWideCount++;
 
         if (serveSide == 1) {
@@ -1290,7 +1326,7 @@ function updateStatistics(rows, matchIndex) {
         }
       }
     } else if (rows[i][secondServeDirColumnNumberPoints] == "body") {
-      if (rows[i][serverColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+      if (isP1Serving) {
         player1SecondServeBodyCount++;
 
         if (serveSide == 1) {
@@ -1317,7 +1353,7 @@ function updateStatistics(rows, matchIndex) {
         }
       }
     } else if (rows[i][secondServeDirColumnNumberPoints] == "t") {
-      if (rows[i][serverColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+      if (isP1Serving) {
         player1SecondServeTCount++;
 
         if (serveSide == 1) {
@@ -1345,18 +1381,18 @@ function updateStatistics(rows, matchIndex) {
     }
 
     // Serve+1 and serve-and-volley
-    if (rows[i][serverColumnNumberPoints] == rows[i][winnerColumnNumberPoints]) {
+    if ((isP1Serving && isP1Winner) || (isP2Serving && isP2Winner)) {
       // Server is winner
       if (((rows[i][rallyLengthColumnNumberPoints] == 3) && (rows[i][outcomeTypeColumnNumberPoints] == "winner")) ||
         ((rows[i][rallyLengthColumnNumberPoints] == 4) && (rows[i][outcomeTypeColumnNumberPoints] == "forced error"))) {
         // The server won the point on the third shot
-        if (rows[i][serverColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+        if (isP1Serving) {
           player1ServePlusOneWonCount++;
 
           if ((rows[i][lastShotTypeColumnNumberPoints] == "volley") || (rows[i][lastShotTypeColumnNumberPoints] == "overhead")) {
             player1ServeAndVolleyWonCount++;
           }
-        } else {
+        } else if (isP2Serving) {
           player2ServePlusOneWonCount++;
 
           if ((rows[i][lastShotTypeColumnNumberPoints] == "volley") || (rows[i][lastShotTypeColumnNumberPoints] == "overhead")) {
@@ -1364,16 +1400,16 @@ function updateStatistics(rows, matchIndex) {
           }
         }
       }
-    } else {
+    } else if ((isP1Serving && isP2Winner) || (isP2Serving && isP1Winner)) {
       // The server lost the point
       if ((rows[i][rallyLengthColumnNumberPoints] == 3) && (rows[i][outcomeTypeColumnNumberPoints] == "unforced error")) {
-        if (rows[i][serverColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+        if (isP1Serving) {
           player1ServePlusOneUnforcedErrorCount++;
 
           if ((rows[i][lastShotTypeColumnNumberPoints] == "volley") || (rows[i][lastShotTypeColumnNumberPoints] == "overhead")) {
             player1ServeAndVolleyUnforcedErrorCount++;
           }
-        } else {
+        } else if (isP2Serving) {
           player2ServePlusOneUnforcedErrorCount++;
 
           if ((rows[i][lastShotTypeColumnNumberPoints] == "volley") || (rows[i][lastShotTypeColumnNumberPoints] == "overhead")) {
@@ -1385,7 +1421,7 @@ function updateStatistics(rows, matchIndex) {
 
     // Calculate unforced error count
     if (rows[i][outcomeTypeColumnNumberPoints] === "unforced error") {
-      if (rows[i][winnerColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+      if (isP1Winner) {
         // If player 1 is the winner, then it's player2's unforced error. 
         player2UnforcedErrorCount++;
 
@@ -1396,7 +1432,7 @@ function updateStatistics(rows, matchIndex) {
         } else if (rows[i][outcomeColumnNumberPoints] == "net") {
           player2UnforcedErrorNetCount++;
         }
-      } else {
+      } else if (isP2Winner) {
         // If player2 is the winner, then it's player1's unforced error.
         player1UnforcedErrorCount++;
 
@@ -1416,7 +1452,7 @@ function updateStatistics(rows, matchIndex) {
       if (rows[i][lastShotTypeColumnNumberPoints] != "serve") {
         // Don't count unreturnable serves as forced errors. 
         // Will count it in a separate variable.
-        if (rows[i][winnerColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+        if (isP1Winner) {
           player1WinnerForcedErrorCount++;
 
           player1WinnerHistogram[player1WinnerHistogram.length - 1]++;
@@ -1426,7 +1462,7 @@ function updateStatistics(rows, matchIndex) {
           } else if (rows[i][outcomeTypeColumnNumberPoints] === "forced error") {
             player1ForcedErrorCount++;
           }
-        } else {
+        } else if (isP2Winner) {
           player2WinnerForcedErrorCount++;
 
           player2WinnerHistogram[player2WinnerHistogram.length - 1]++;
@@ -1441,12 +1477,12 @@ function updateStatistics(rows, matchIndex) {
     }
 
     // Calculate points won
-    if (rows[i][winnerColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+    if (isP1Winner) {
       player1PointsWonCount++;
 
       player1PointsWonHistogram[player1PointsWonHistogram.length - 1]++;
       player2PointsLostHistogram[player2PointsLostHistogram.length - 1]++;
-    } else {
+    } else if (isP2Winner) {
       player2PointsWonCount++;
 
       player2PointsWonHistogram[player2PointsWonHistogram.length - 1]++;
@@ -1483,10 +1519,10 @@ function updateStatistics(rows, matchIndex) {
 
       // Determine the server
       var server = 0;
-      if (rows[i][serverColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+      if (isP1Serving) {
         // player1 is serving
         server = 1;
-      } else if (rows[i][serverColumnNumberPoints] == rows[i][player2ColumnNumberPoints]) {
+      } else if (isP2Serving) {
         server = 2;
       }
 
@@ -1514,7 +1550,7 @@ function updateStatistics(rows, matchIndex) {
           }
         }
 
-        if (rows[i][winnerColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+        if (isP1Winner) {
           // Player1 won the point          
           player1ShortPointWonCount++;
 
@@ -1580,7 +1616,7 @@ function updateStatistics(rows, matchIndex) {
           }
         }
 
-        if (rows[i][winnerColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+        if (isP1Winner) {
           // Player1 won this point
           player1LongerPointWonCount++;
 
@@ -1647,7 +1683,7 @@ function updateStatistics(rows, matchIndex) {
           }
         }
 
-        if (rows[i][winnerColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+        if (isP1Winner) {
           // Player1 won this point
           player1VeryLongPointWonCount++;
 
@@ -1676,7 +1712,7 @@ function updateStatistics(rows, matchIndex) {
     }
 
     // Count different unforced errors to identify technical weaknesses
-    if (rows[i][winnerColumnNumberPoints] == rows[i][player2ColumnNumberPoints]) {
+    if (isP2Winner) {
       if (rows[i][outcomeTypeColumnNumberPoints] == "unforced error") {
         // player 1 made an unforced error
         var lastShotType = rows[i][lastShotTypeColumnNumberPoints];
@@ -1741,7 +1777,7 @@ function updateStatistics(rows, matchIndex) {
     }
 
     // Count different winners and opponent forced errors to identify strengths
-    if (rows[i][winnerColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+    if (isP1Winner) {
       if ((rows[i][outcomeTypeColumnNumberPoints] === "winner") ||
         (rows[i][outcomeTypeColumnNumberPoints] === "forced error")) {
         // player 1 hit a winner
@@ -1875,7 +1911,7 @@ function updateStatistics(rows, matchIndex) {
 
       player1HighPressurePointHistogram[player1HighPressurePointHistogram.length - 1]++;
 
-      if (rows[i][winnerColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+      if (isP1Winner) {
         // If player1 wins a high-pressure point
         player1HighPressurePointWonCount++;
 
@@ -1892,7 +1928,7 @@ function updateStatistics(rows, matchIndex) {
           }
         }
 
-        if (rows[i][serverColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+        if (isP1Serving) {
           player1HighPressurePointWonOnServeCount++;
           if ((rows[i][firstServeOutcomeColumnNumberPoints] == "ace") ||
             (rows[i][secondServeOutcomeColumnNumberPoints] == "ace")) {
@@ -1924,7 +1960,7 @@ function updateStatistics(rows, matchIndex) {
           }
         }
 
-        if (rows[i][serverColumnNumberPoints] == rows[i][player2ColumnNumberPoints]) {
+        if (isP2Serving) {
           // Player2 is serving
           player1HighPressurePointLostOnReturnCount++;
 
@@ -1943,7 +1979,7 @@ function updateStatistics(rows, matchIndex) {
         }
       }
 
-      if (rows[i][serverColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+      if (isP1Serving) {
         // Player1 served this point
         player1HighPressurePointServedCount++;
 
@@ -2005,7 +2041,7 @@ function updateStatistics(rows, matchIndex) {
 
       player2HighPressurePointHistogram[player2HighPressurePointHistogram.length - 1]++;
 
-      if (rows[i][winnerColumnNumberPoints] == rows[i][player2ColumnNumberPoints]) {
+      if (isP2Winner) {
         // If player2 wins a high-pressure point
         player2HighPressurePointWonCount++;
 
@@ -2022,7 +2058,7 @@ function updateStatistics(rows, matchIndex) {
           }
         }
 
-        if (rows[i][serverColumnNumberPoints] == rows[i][player2ColumnNumberPoints]) {
+        if (isP2Serving) {
 
           player2HighPressurePointWonOnServeCount++;
           if ((rows[i][firstServeOutcomeColumnNumberPoints] == "ace") ||
@@ -2054,7 +2090,7 @@ function updateStatistics(rows, matchIndex) {
           }
         }
 
-        if (rows[i][serverColumnNumberPoints] == rows[i][player1ColumnNumberPoints]) {
+        if (isP1Serving) {
           // Player1 is serving
           player2HighPressurePointLostOnReturnCount++;
 
@@ -2073,7 +2109,7 @@ function updateStatistics(rows, matchIndex) {
         }
       }
 
-      if (rows[i][serverColumnNumberPoints] == rows[i][player2ColumnNumberPoints]) {
+      if (isP2Serving) {
         // Player2 served this point
         player2HighPressurePointServedCount++;
 
@@ -2131,7 +2167,7 @@ function updateStatistics(rows, matchIndex) {
     }
 
     var gameOrBreakPointStatus = isGameOrBreakPoint(rows[i]);
-    var player1WonPoint = (rows[i][winnerColumnNumberPoints] == rows[i][player1ColumnNumberPoints]);
+    var player1WonPoint = (isP1Winner);
 
     if ((gameOrBreakPointStatus == 1) || (gameOrBreakPointStatus == 3)) {
       // Player1's game point
@@ -3048,6 +3084,9 @@ function isHighPressurePoint(row) {
     tbPressureScore = 8;
   }
 
+  var p1 = row[player1ColumnNumberPoints];
+  var p2 = row[player2ColumnNumberPoints];
+
   if (isTiebreak) {
     var result = 0;
     if (row[tiebreakScore2PreColumnNumberPoints] >= tbPressureScore) {
@@ -3094,25 +3133,29 @@ function isGameOrBreakPoint(row) {
     tiebreakDeuceThreshold = 9;
   }
 
+  var p1 = row[player1ColumnNumberPoints];
+  var p2 = row[player2ColumnNumberPoints];
+  var server = row[serverColumnNumberPoints];
+
   if (tiebreak) {
     if ((row[tiebreakScore1PreColumnNumberPoints] >= tiebreakDeuceThreshold) && (row[tiebreakScore1PreColumnNumberPoints] > row[tiebreakScore2PreColumnNumberPoints])) {
       // Player1 is one point from winning the game
-      if (row[serverColumnNumberPoints] == row[player1ColumnNumberPoints]) {
+      if (robustMatch(server, p1, p2) === 1) {
         // Player1 is serving
         // player1 game point
         return 1;
-      } else if (row[serverColumnNumberPoints] == row[player2ColumnNumberPoints]) {
+      } else if (robustMatch(server, p1, p2) === 2) {
         // Player2 is serving
         // Player1 break point
         return -1;
       }
     } else if ((row[tiebreakScore2PreColumnNumberPoints] >= tiebreakDeuceThreshold) && (row[tiebreakScore2PreColumnNumberPoints] > row[tiebreakScore1PreColumnNumberPoints])) {
       // Player2 is one point from winning the game
-      if (row[serverColumnNumberPoints] == row[player2ColumnNumberPoints]) {
+      if (robustMatch(server, p1, p2) === 2) {
         // Player2 is serving
         // player2 game point
         return 2;
-      } else if (row[serverColumnNumberPoints] == row[player1ColumnNumberPoints]) {
+      } else if (robustMatch(server, p1, p2) === 1) {
         // Player1 is serving
         // Player2 break point
         return -2;
@@ -3123,11 +3166,11 @@ function isGameOrBreakPoint(row) {
     if (((row[pointScore1PreColumnNumberPoints] == "40") && ((row[pointScore2PreColumnNumberPoints] != "40") && (row[pointScore2PreColumnNumberPoints] != "ad"))) ||
       (row[pointScore1PreColumnNumberPoints] == "ad")) {
       // Player1 is one point from winning the game
-      if (row[serverColumnNumberPoints] == row[player1ColumnNumberPoints]) {
+      if (robustMatch(server, p1, p2) === 1) {
         // Player1 is serving
         // player1 game point
         return 1;
-      } else if (row[serverColumnNumberPoints] == row[player2ColumnNumberPoints]) {
+      } else if (robustMatch(server, p1, p2) === 2) {
         // Player2 is serving
         // Player1 break point
         return -1;
@@ -3135,11 +3178,11 @@ function isGameOrBreakPoint(row) {
     } else if (((row[pointScore2PreColumnNumberPoints] == "40") && ((row[pointScore1PreColumnNumberPoints] != "40") && (row[pointScore1PreColumnNumberPoints] != "ad"))) ||
       (row[pointScore2PreColumnNumberPoints] == "ad")) {
       // Player2 is one point from winning the game
-      if (row[serverColumnNumberPoints] == row[player2ColumnNumberPoints]) {
+      if (robustMatch(server, p1, p2) === 2) {
         // Player2 is serving
         // player2 game point
         return 2;
-      } else if (row[serverColumnNumberPoints] == row[player1ColumnNumberPoints]) {
+      } else if (robustMatch(server, p1, p2) === 1) {
         // Player1 is serving
         // Player2 break point
         return -2;
@@ -3148,10 +3191,10 @@ function isGameOrBreakPoint(row) {
       (row[pointScore1PreColumnNumberPoints] == "40") &&
       (row[pointScore2PreColumnNumberPoints] == "40")) {
       // 40-40 in no-ad scoring
-      if (row[serverColumnNumberPoints] == row[player1ColumnNumberPoints]) {
+      if (robustMatch(server, p1, p2) === 1) {
         // Player1 is serving. Player1's game point and player2's break point
         return 3;
-      } else if (row[serverColumnNumberPoints] == row[player2ColumnNumberPoints]) {
+      } else if (robustMatch(server, p1, p2) === 2) {
         // Player2 is serving. Player2's game point and player1's break point
         return 4;
       }
@@ -3390,10 +3433,10 @@ function normalizePointsForSubject(rowsForMatch, side) {
   var opponentName = (side === 'player2') ? p1 : p2;
 
   var remap = function (v) {
-    v = String(v || '').trim();
-    if (v === subjectName) return 'subject';
-    if (v === opponentName) return 'opponent';
-    return v;
+    var match = robustMatch(v, subjectName, opponentName);
+    if (match === 1) return 'subject';
+    if (match === 2) return 'opponent';
+    return String(v || '').trim();
   };
 
   var out = [];

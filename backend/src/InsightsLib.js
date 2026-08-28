@@ -247,6 +247,7 @@ function computeInsights(rows, subjectName, opponentName) {
     var winner = r['winner'];
     var subjectServing = (server === 'subject');
     var subjectWon = (winner === 'subject');
+    var opponentWon = (winner === 'opponent');
 
     // ── game/set/match transition detection (for bucketing) ──
     if (i > 0) {
@@ -360,7 +361,7 @@ function computeInsights(rows, subjectName, opponentName) {
 
     // ── Baseline: unforced errors & winners by shot (subject) ──
     // Subject's unforced errors = subject made UE => winner == opponent
-    if (!subjectWon && r['outcome type'] === 'unforced error') {
+    if (opponentWon && r['outcome type'] === 'unforced error') {
       baseline.ueTotal++;
       if (r['outcome'] === 'net') baseline.ueNet++;
       else if (r['outcome'] === 'out') baseline.ueOut++;
@@ -386,7 +387,11 @@ function computeInsights(rows, subjectName, opponentName) {
     }
 
     // ── Overall points / rally ──
-    if (subjectWon) overall.pointsWon++; else overall.pointsLost++;
+    if (subjectWon) {
+      overall.pointsWon++;
+    } else if (opponentWon) {
+      overall.pointsLost++;
+    }
     var rl = Number(r['rally length']);
     if (!isNaN(rl) && rl > 0) {
       overall.rallySum += rl;
@@ -417,7 +422,7 @@ function computeInsights(rows, subjectName, opponentName) {
       if (subjectWon) {
         pressure.hpWon++;
         pressure.hpWonByOpponentUE += (r['outcome type'] === 'unforced error') ? 1 : 0;
-      } else {
+      } else if (opponentWon) {
         pressure.hpLost++;
         pressure.hpUE += (r['outcome type'] === 'unforced error') ? 1 : 0;
       }
@@ -432,8 +437,12 @@ function computeInsights(rows, subjectName, opponentName) {
     if (curBucket() && !curBucket().isSetMarker) {
       var b = curBucket();
       b.n++;
-      if (subjectWon) b.pointsWon++; else b.pointsLost++;
-      if (r['outcome type'] === 'unforced error' && !subjectWon) b.unforcedErrors++; // subject UE
+      if (subjectWon) {
+        b.pointsWon++;
+      } else if (opponentWon) {
+        b.pointsLost++;
+      }
+      if (r['outcome type'] === 'unforced error' && opponentWon) b.unforcedErrors++; // subject UE
       if (subjectWon && (r['outcome type'] === 'winner' || r['outcome type'] === 'forced error')) b.winners++;
       if (subjectServing && (r['first serve outcome'] === 'ace' || r['second serve outcome'] === 'ace')) b.aces++;
       if (subjectServing && ((r['first serve outcome'] === 'out' || r['first serve outcome'] === 'net') &&
