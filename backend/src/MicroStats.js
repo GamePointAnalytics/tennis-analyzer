@@ -93,9 +93,39 @@ function addNewAnalysis(user, matchIndex, player1, player2, tournament, date, ad
   sheet.appendRow([user, matchIndex, player1, player2, tournament, date, adScoring]);
 }
 
-// When a match is deleted, delete the corresponding row 
-// in the analysis sheet and all the points in the points sheet. 
-function deleteAnalysis(matchIndex) {
+// Look up which userId owns a given match, by scanning the analyses sheet.
+// Returns null if the match doesn't exist yet (nothing to protect).
+function getMatchOwner(matchIndex) {
+  var sheet = spreadsheet.getSheetByName("analyses");
+  var values = sheet.getDataRange().getValues();
+  var matchIndexCol = getColumnNumber("match index", "analyses");
+  var userCol = getColumnNumber("user", "analyses");
+
+  for (var i = 1; i < values.length; i++) {
+    if (values[i][matchIndexCol] == matchIndex) {
+      return values[i][userCol];
+    }
+  }
+  return null;
+}
+
+// Throws if callerUserId doesn't own matchIndex. A match with no recorded
+// owner yet (null) is allowed through — there's nothing to protect until
+// it exists. This is identity, not cryptographic auth: it stops accidental
+// or casual cross-user reads/writes via a guessed matchIndex, not a
+// determined attacker who also guesses the target's userId.
+function assertOwnership(matchIndex, callerUserId) {
+  var owner = getMatchOwner(matchIndex);
+  if (owner === null) return;
+  if (String(owner) !== String(callerUserId)) {
+    throw new Error("Not authorized to access this match.");
+  }
+}
+
+// When a match is deleted, delete the corresponding row
+// in the analysis sheet and all the points in the points sheet.
+function deleteAnalysis(matchIndex, callerUserId) {
+  assertOwnership(matchIndex, callerUserId);
   Logger.log(matchIndex);
 
   var sheet = spreadsheet.getSheetByName("analyses");
@@ -3251,22 +3281,27 @@ function doPost(e) {
     var payload = JSON.parse(e.postData.contents);
     var action = payload.action;
     var result = { status: "success" };
+    // The requesting device's identity, sent on every request (see api.js's
+    // makeRequest). Falls back to match.user for older syncMatch payloads
+    // that predate this field, so an in-flight sync from a not-yet-updated
+    // client during rollout still authenticates as itself.
+    var callerUserId = payload.userId || (payload.match && payload.match.user);
 
     switch (action) {
       case "syncMatch":
-        result.data = handleSyncMatch(payload.match);
+        result.data = handleSyncMatch(payload.match, callerUserId);
         break;
       case "syncPoints":
-        result.data = handleSyncPoints(payload.matchIndex, payload.points);
+        result.data = handleSyncPoints(payload.matchIndex, payload.points, callerUserId);
         break;
       case "deleteMatch":
-        deleteAnalysis(payload.matchIndex);
+        deleteAnalysis(payload.matchIndex, callerUserId);
         break;
       case "getAnalysis":
-        result.data = handleGetAnalysis(payload.matchIndex);
+        result.data = handleGetAnalysis(payload.matchIndex, callerUserId);
         break;
       case "getInsights":
-        result.data = handleGetInsights(payload.matchIndexes, payload.side);
+        result.data = handleGetInsights(payload.matchIndexes, payload.side, callerUserId);
         break;
       case "getMatchesByUser":
         result.data = handleGetMatchesByUser(payload.userId);
@@ -3284,12 +3319,12 @@ function doPost(e) {
 }
 
 // Helper: Upsert match metadata
-function handleSyncMatch(match) {
+function handleSyncMatch(match, callerUserId) {
   var sheet = spreadsheet.getSheetByName("analyses");
   var range = sheet.getDataRange();
   var values = range.getValues();
   var matchIndexCol = getColumnNumber("match index", "analyses");
-  
+
   var foundRowIndex = -1;
   for (var i = 0; i < values.length; i++) {
     if (values[i][matchIndexCol] == match.matchIndex) {
@@ -3297,17 +3332,23 @@ function handleSyncMatch(match) {
       break;
     }
   }
-  
+
   if (foundRowIndex === -1) {
-    addNewAnalysis(match.user, match.matchIndex, match.player1, match.player2, match.tournament, match.date, match.adScoring);
+    // New match — the requester becomes its owner. Prefer callerUserId
+    // (the authenticated request identity) over the client-supplied
+    // match.user field so ownership can't be forged by sending someone
+    // else's userId in the match body.
+    addNewAnalysis(callerUserId || match.user, match.matchIndex, match.player1, match.player2, match.tournament, match.date, match.adScoring);
   } else {
+    assertOwnership(match.matchIndex, callerUserId);
     updateMatchInfo(match.matchIndex, match.date, match.player1, match.player2, match.tournament, match.adScoring);
   }
   return { matchIndex: match.matchIndex };
 }
 
 // Helper: Overwrite all points for a match and recalculate
-function handleSyncPoints(matchIndex, pointsList) {
+function handleSyncPoints(matchIndex, pointsList, callerUserId) {
+  assertOwnership(matchIndex, callerUserId);
   var sheet = spreadsheet.getSheetByName("points");
   var range = sheet.getDataRange();
   var values = range.getValues();
@@ -3343,7 +3384,8 @@ function handleSyncPoints(matchIndex, pointsList) {
 }
 
 // Helper: Retrieve pre-formatted analysis strings for display
-function handleGetAnalysis(matchIndex) {
+function handleGetAnalysis(matchIndex, callerUserId) {
+  assertOwnership(matchIndex, callerUserId);
   var sheet = spreadsheet.getSheetByName("analyses");
   var range = sheet.getDataRange();
   var values = range.getValues();
@@ -3468,9 +3510,13 @@ function normalizePointsForSubject(rowsForMatch, side) {
 // Compute structured insights for one or more matches from a chosen side.
 // mode is NOT used here — the backend always returns the same structured JSON;
 // the device decides whether to enrich with an LLM pass.
-function handleGetInsights(matchIndexes, side) {
+function handleGetInsights(matchIndexes, side, callerUserId) {
   side = side || 'player1';
   if (!matchIndexes || !matchIndexes.length) return null;
+
+  for (var idx = 0; idx < matchIndexes.length; idx++) {
+    assertOwnership(matchIndexes[idx], callerUserId);
+  }
 
   var keySet = matchIndexes.slice().sort().join(',') + '|' + side;
 

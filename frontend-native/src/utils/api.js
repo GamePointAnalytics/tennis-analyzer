@@ -1,17 +1,19 @@
 import { getSettings } from './settings';
 
 async function makeRequest(payload) {
-  const { webAppUrl } = await getSettings();
+  const { webAppUrl, userId } = await getSettings();
   if (!webAppUrl || !webAppUrl.startsWith('http')) {
     throw new Error('Apps Script Web App URL is not configured or invalid.');
   }
 
+  // Every request carries this device's userId so the backend can check
+  // that the caller actually owns the match it's reading/writing/deleting.
   const response = await fetch(webAppUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ ...payload, userId }),
   });
 
   if (!response.ok) {
