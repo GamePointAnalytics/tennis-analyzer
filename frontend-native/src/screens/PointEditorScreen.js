@@ -276,44 +276,51 @@ export default function PointEditorScreen({ route, navigation }) {
     setModalVisible(false);
   };
 
-  const handleSavePoint = async () => {
+  // Builds the point object from current form state, with any fields in
+  // `overrides` taking precedence — lets quick-log shortcuts (Ace/Double
+  // Fault) save a fully-formed point without waiting on React state/effect
+  // timing.
+  const buildPointFromState = (overrides = {}) => ({
+    user: match.user,
+    matchIndex: match.matchIndex,
+    server,
+    firstServeDirection: firstServeDir,
+    firstServeOutcome: firstServeOutcome,
+    secondServeDirection: secondServeDir,
+    secondServeOutcome: secondServeOutcome,
+    rallyLength,
+    lastShotHand,
+    lastShotType,
+    outcome,
+    outcomeType,
+    winner,
+    notes,
+    tiebreak: isTiebreak ? 'true' : 'false',
+    tiebreakType: isTiebreak ? tiebreakType : '7',
+    adScoring: match.adScoring,
+    // Manual Pre-point overrides:
+    setScore1PreOverride: hasOverrides ? overrideSet1 : undefined,
+    setScore2PreOverride: hasOverrides ? overrideSet2 : undefined,
+    gameScore1PreOverride: hasOverrides ? overrideGame1 : undefined,
+    gameScore2PreOverride: hasOverrides ? overrideGame2 : undefined,
+    pointScore1PreOverride: hasOverrides ? overridePoint1 : undefined,
+    pointScore2PreOverride: hasOverrides ? overridePoint2 : undefined,
+    tiebreakOverride: hasOverrides ? (overrideTiebreak ? 'true' : 'false') : undefined,
+    // New points capture entry time; edits preserve the original timestamp
+    timestamp: isEditMode
+      ? (pointsList[editPointIndex]?.timestamp || '')
+      : new Date().toISOString(),
+    ...overrides,
+  });
+
+  const handleSavePoint = async (overrides = {}) => {
     if (savingRef.current) return; // prevent double-tap race
-    if (!winner) {
+    if (!(overrides.winner || winner)) {
       Alert.alert('Validation Error', 'You must select the point winner.');
       return;
     }
 
-    const newPoint = {
-      user: match.user,
-      matchIndex: match.matchIndex,
-      server,
-      firstServeDirection: firstServeDir,
-      firstServeOutcome: firstServeOutcome,
-      secondServeDirection: secondServeDir,
-      secondServeOutcome: secondServeOutcome,
-      rallyLength,
-      lastShotHand,
-      lastShotType,
-      outcome,
-      outcomeType,
-      winner,
-      notes,
-      tiebreak: isTiebreak ? 'true' : 'false',
-      tiebreakType: isTiebreak ? tiebreakType : '7',
-      adScoring: match.adScoring,
-      // Manual Pre-point overrides:
-      setScore1PreOverride: hasOverrides ? overrideSet1 : undefined,
-      setScore2PreOverride: hasOverrides ? overrideSet2 : undefined,
-      gameScore1PreOverride: hasOverrides ? overrideGame1 : undefined,
-      gameScore2PreOverride: hasOverrides ? overrideGame2 : undefined,
-      pointScore1PreOverride: hasOverrides ? overridePoint1 : undefined,
-      pointScore2PreOverride: hasOverrides ? overridePoint2 : undefined,
-      tiebreakOverride: hasOverrides ? (overrideTiebreak ? 'true' : 'false') : undefined,
-      // New points capture entry time; edits preserve the original timestamp
-      timestamp: isEditMode
-        ? (pointsList[editPointIndex]?.timestamp || '')
-        : new Date().toISOString(),
-    };
+    const newPoint = buildPointFromState(overrides);
 
     // In edit mode replace the existing point; in add mode append.
     let updatedPointsList;
@@ -424,7 +431,45 @@ export default function PointEditorScreen({ route, navigation }) {
     );
   };
 
+  // Quick-log shortcuts: aces and double faults fully determine every other
+  // field on the point, so save immediately instead of making the user tap
+  // through 7 more cards for the most common outcomes.
+  const handleQuickAce = () => {
+    handleSavePoint({
+      winner: server,
+      firstServeOutcome: 'ace',
+      secondServeOutcome: 'in',
+      secondServeDirection: '',
+      rallyLength: 1,
+      lastShotType: 'serve',
+      lastShotHand: '',
+      outcome: 'in',
+      outcomeType: 'winner',
+    });
+  };
+
+  const handleQuickDoubleFault = () => {
+    const receiver = server === 'player1' ? 'player2' : 'player1';
+    handleSavePoint({
+      winner: receiver,
+      firstServeOutcome: 'net',
+      secondServeOutcome: 'net',
+      rallyLength: 0,
+      lastShotType: 'serve',
+      lastShotHand: '',
+      outcome: 'out',
+      outcomeType: 'unforced error',
+    });
+  };
+
   const showSecondServe = firstServeOutcome === 'out' || firstServeOutcome === 'net';
+  // Once an ace or double fault is set, last-shot/outcome details are already
+  // fully determined — hide those cards instead of leaving dead scrolling.
+  const outcomeFullyDetermined =
+    firstServeOutcome === 'ace' ||
+    secondServeOutcome === 'ace' ||
+    secondServeOutcome === 'out' ||
+    secondServeOutcome === 'net';
 
   if (!match) {
     return (
@@ -710,6 +755,18 @@ export default function PointEditorScreen({ route, navigation }) {
             />
           </Card>
 
+          {/* 1b. Quick-log shortcuts for the two most common point endings */}
+          <View style={styles.quickLogRow}>
+            <HapticButton onPress={handleQuickAce} style={[styles.quickLogButton, styles.quickLogAce]}>
+              <Ionicons name="flash" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+              <Text style={styles.quickLogButtonText}>Ace</Text>
+            </HapticButton>
+            <HapticButton onPress={handleQuickDoubleFault} style={[styles.quickLogButton, styles.quickLogDoubleFault]}>
+              <Ionicons name="close-circle" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+              <Text style={styles.quickLogButtonText}>Double Fault</Text>
+            </HapticButton>
+          </View>
+
           {/* 2. First Serve */}
           <Card style={styles.card}>
             <Text style={styles.sectionHeader}>First Serve</Text>
@@ -771,58 +828,62 @@ export default function PointEditorScreen({ route, navigation }) {
             <RallySelector value={rallyLength} onChange={setRallyLength} />
           </Card>
 
-          {/* 5. Last Shot details */}
-          <Card style={styles.card}>
-            <Text style={styles.sectionHeader}>Last Shot Details</Text>
-            <SegmentedControl
-              label="Last Shot Hand"
-              options={[
-                { label: 'Forehand', value: 'forehand' },
-                { label: 'Backhand', value: 'backhand' }
-              ]}
-              selectedValue={lastShotHand}
-              onValueChange={setLastShotHand}
-            />
-            <SegmentedControl
-              label="Last Shot Type"
-              options={[
-                { label: 'Serve', value: 'serve' },
-                { label: 'Volley', value: 'volley' },
-                { label: 'Slice', value: 'slice' },
-                { label: 'Smash', value: 'overhead' },
-                { label: 'Drop', value: 'dropshot' },
-                { label: 'Lob', value: 'lob' },
-                { label: 'Pass', value: 'passing' }
-              ]}
-              selectedValue={lastShotType}
-              onValueChange={setLastShotType}
-            />
-          </Card>
+          {/* 5. Last Shot details — hidden once an ace/double fault already fully determines it */}
+          {!outcomeFullyDetermined && (
+            <Card style={styles.card}>
+              <Text style={styles.sectionHeader}>Last Shot Details</Text>
+              <SegmentedControl
+                label="Last Shot Hand"
+                options={[
+                  { label: 'Forehand', value: 'forehand' },
+                  { label: 'Backhand', value: 'backhand' }
+                ]}
+                selectedValue={lastShotHand}
+                onValueChange={setLastShotHand}
+              />
+              <SegmentedControl
+                label="Last Shot Type"
+                options={[
+                  { label: 'Serve', value: 'serve' },
+                  { label: 'Volley', value: 'volley' },
+                  { label: 'Slice', value: 'slice' },
+                  { label: 'Smash', value: 'overhead' },
+                  { label: 'Drop', value: 'dropshot' },
+                  { label: 'Lob', value: 'lob' },
+                  { label: 'Pass', value: 'passing' }
+                ]}
+                selectedValue={lastShotType}
+                onValueChange={setLastShotType}
+              />
+            </Card>
+          )}
 
-          {/* 6. Outcome Details */}
-          <Card style={styles.card}>
-            <Text style={styles.sectionHeader}>Point Resolution</Text>
-            <SegmentedControl
-              label="Shot Result"
-              options={[
-                { label: 'In', value: 'in' },
-                { label: 'Out', value: 'out' },
-                { label: 'Net', value: 'net' }
-              ]}
-              selectedValue={outcome}
-              onValueChange={setOutcome}
-            />
-            <SegmentedControl
-              label="Classification"
-              options={[
-                { label: 'Winner', value: 'winner' },
-                { label: 'Unforced Error', value: 'unforced error' },
-                { label: 'Forced Error', value: 'forced error' }
-              ]}
-              selectedValue={outcomeType}
-              onValueChange={setOutcomeType}
-            />
-          </Card>
+          {/* 6. Outcome Details — hidden once an ace/double fault already fully determines it */}
+          {!outcomeFullyDetermined && (
+            <Card style={styles.card}>
+              <Text style={styles.sectionHeader}>Point Resolution</Text>
+              <SegmentedControl
+                label="Shot Result"
+                options={[
+                  { label: 'In', value: 'in' },
+                  { label: 'Out', value: 'out' },
+                  { label: 'Net', value: 'net' }
+                ]}
+                selectedValue={outcome}
+                onValueChange={setOutcome}
+              />
+              <SegmentedControl
+                label="Classification"
+                options={[
+                  { label: 'Winner', value: 'winner' },
+                  { label: 'Unforced Error', value: 'unforced error' },
+                  { label: 'Forced Error', value: 'forced error' }
+                ]}
+                selectedValue={outcomeType}
+                onValueChange={setOutcomeType}
+              />
+            </Card>
+          )}
 
           {/* 7. REQUIRED: Winner of point */}
           <Card style={[styles.card, styles.winnerCard]}>
@@ -936,6 +997,30 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 12,
     padding: 12,
+  },
+  quickLogRow: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  quickLogButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    paddingVertical: 12,
+    marginHorizontal: 4,
+  },
+  quickLogAce: {
+    backgroundColor: '#F59E0B', // amber-500
+  },
+  quickLogDoubleFault: {
+    backgroundColor: '#EF4444', // red-500
+  },
+  quickLogButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 14,
   },
   tiebreakCard: {
     borderWidth: 1.5,
