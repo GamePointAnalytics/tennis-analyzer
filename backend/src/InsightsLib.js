@@ -247,6 +247,7 @@ function computeInsights(rows, subjectName, opponentName) {
     var winner = r['winner'];
     var subjectServing = (server === 'subject');
     var subjectWon = (winner === 'subject');
+    var opponentWon = (winner === 'opponent');
 
     // ── game/set/match transition detection (for bucketing) ──
     if (i > 0) {
@@ -360,7 +361,7 @@ function computeInsights(rows, subjectName, opponentName) {
 
     // ── Baseline: unforced errors & winners by shot (subject) ──
     // Subject's unforced errors = subject made UE => winner == opponent
-    if (!subjectWon && r['outcome type'] === 'unforced error') {
+    if (opponentWon && r['outcome type'] === 'unforced error') {
       baseline.ueTotal++;
       if (r['outcome'] === 'net') baseline.ueNet++;
       else if (r['outcome'] === 'out') baseline.ueOut++;
@@ -386,7 +387,11 @@ function computeInsights(rows, subjectName, opponentName) {
     }
 
     // ── Overall points / rally ──
-    if (subjectWon) overall.pointsWon++; else overall.pointsLost++;
+    if (subjectWon) {
+      overall.pointsWon++;
+    } else if (opponentWon) {
+      overall.pointsLost++;
+    }
     var rl = Number(r['rally length']);
     if (!isNaN(rl) && rl > 0) {
       overall.rallySum += rl;
@@ -417,7 +422,7 @@ function computeInsights(rows, subjectName, opponentName) {
       if (subjectWon) {
         pressure.hpWon++;
         pressure.hpWonByOpponentUE += (r['outcome type'] === 'unforced error') ? 1 : 0;
-      } else {
+      } else if (opponentWon) {
         pressure.hpLost++;
         pressure.hpUE += (r['outcome type'] === 'unforced error') ? 1 : 0;
       }
@@ -432,8 +437,12 @@ function computeInsights(rows, subjectName, opponentName) {
     if (curBucket() && !curBucket().isSetMarker) {
       var b = curBucket();
       b.n++;
-      if (subjectWon) b.pointsWon++; else b.pointsLost++;
-      if (r['outcome type'] === 'unforced error' && !subjectWon) b.unforcedErrors++; // subject UE
+      if (subjectWon) {
+        b.pointsWon++;
+      } else if (opponentWon) {
+        b.pointsLost++;
+      }
+      if (r['outcome type'] === 'unforced error' && opponentWon) b.unforcedErrors++; // subject UE
       if (subjectWon && (r['outcome type'] === 'winner' || r['outcome type'] === 'forced error')) b.winners++;
       if (subjectServing && (r['first serve outcome'] === 'ace' || r['second serve outcome'] === 'ace')) b.aces++;
       if (subjectServing && ((r['first serve outcome'] === 'out' || r['first serve outcome'] === 'net') &&
@@ -675,7 +684,92 @@ function buildReport(rows, serve, baseline, net, pressure, overall, ts, subjectN
     q6_mental: q6,
     q7_diagnosis: q7,
     q8_recommendations: q8,
+    // Templated prose mirrors of Q1-Q6, same pattern as Q7/Q8: deterministic,
+    // no LLM involvement. Lets AI narrative modes rephrase-only end to end
+    // instead of ever re-deriving numbers from raw counters.
+    q1_narrative: buildQ1Narrative(q1),
+    q2_narrative: buildQ2Narrative(q2),
+    q3_narrative: buildQ3Narrative(q3),
+    q4_narrative: buildQ4Narrative(q4),
+    q5_narrative: buildQ5Narrative(q5),
+    q6_narrative: buildQ6Narrative(q6),
   };
+}
+
+// ─── Templated Q1-Q6 narratives (rephrase source for AI modes) ──────────────
+function fmtPctObj(obj) {
+  if (!obj || obj.value === null || obj.value === undefined) return 'n/a';
+  return obj.sufficient === false
+    ? obj.value + '% (n=' + (obj.n != null ? obj.n : obj.d) + ', thin sample)'
+    : obj.value + '% (' + obj.n + '/' + obj.d + ')';
+}
+
+function buildQ1Narrative(q1) {
+  var parts = [];
+  var overall = q1.firstServe.overall;
+  parts.push(overall.sufficient && overall.dominant
+    ? 'First serve favors the ' + overall.dominant + ' (' + overall.dominantPct + '% of ' + overall.n + ' serves).'
+    : 'First-serve direction sample is too small for a pattern (n=' + overall.n + ').');
+  var second = q1.secondServe.overall;
+  if (second.sufficient && second.dominant) {
+    parts.push('Second serve favors the ' + second.dominant + ' (' + second.dominantPct + '% of ' + second.n + ' serves).');
+  }
+  var hp = q1.firstServe.highPressure;
+  if (hp.sufficient && hp.dominant) {
+    parts.push('Under high pressure, the first serve goes ' + hp.dominant + ' most often (' + hp.dominantPct + '% of ' + hp.n + ').');
+  }
+  var gp = q1.firstServe.gamePoint;
+  if (gp.sufficient && gp.dominant) {
+    parts.push('On game point, the first serve goes ' + gp.dominant + ' most often (' + gp.dominantPct + '% of ' + gp.n + ').');
+  }
+  return parts.join(' ');
+}
+
+function buildQ2Narrative(q2) {
+  var parts = [];
+  parts.push('First serve in ' + fmtPctObj(q2.firstServeInPct) + ', won ' + fmtPctObj(q2.firstServeWonPct) +
+    '; second serve won ' + fmtPctObj(q2.secondServeWonPct) + '.');
+  parts.push(q2.aces + ' aces, ' + q2.doubleFaults + ' double faults, ' + q2.unreturnableServes + ' unreturnable serves.');
+  q2.strengths.forEach(function (s) { parts.push(s.label + ': ' + s.evidence + '.'); });
+  q2.weaknesses.forEach(function (w) { parts.push(w.label + ': ' + w.evidence + '.'); });
+  return parts.join(' ');
+}
+
+function buildQ3Narrative(q3) {
+  var parts = [];
+  parts.push(q3.unforcedErrors.total + ' unforced errors (' + q3.unforcedErrors.net + ' net, ' + q3.unforcedErrors.out + ' out), ' +
+    q3.winners.total + ' winners/forced errors.');
+  q3.strengths.forEach(function (s) { parts.push(s.label + ': ' + s.evidence + '.'); });
+  q3.weaknesses.forEach(function (w) { parts.push(w.label + ': ' + w.evidence + '.'); });
+  if (!q3.strengths.length && !q3.weaknesses.length) {
+    parts.push('No standout shot-side strength or weakness met the sample-size threshold.');
+  }
+  return parts.join(' ');
+}
+
+function buildQ4Narrative(q4) {
+  if (!q4.assessment) return 'No net-game data available.';
+  return q4.assessment.label + '. ' + q4.assessment.evidence + '.';
+}
+
+function buildQ5Narrative(q5) {
+  var parts = [];
+  parts.push(q5.consistency.sufficient
+    ? q5.consistency.label + ' (mean point differential ' + q5.consistency.mean + '/bucket, variance ' + q5.consistency.variance + ').'
+    : 'Insufficient data to assess consistency.');
+  (q5.stretches || []).forEach(function (s) {
+    parts.push((s.type === 'better' ? 'Better stretch' : 'Worse stretch') + ': ' + s.evidence + '.');
+  });
+  return parts.join(' ');
+}
+
+function buildQ6Narrative(q6) {
+  var parts = [];
+  parts.push(q6.highPressure.sufficient
+    ? 'Won ' + q6.highPressure.won + '/' + (q6.highPressure.won + q6.highPressure.lost) + ' high-pressure points (' + q6.highPressure.winPct.value + '%).'
+    : 'Insufficient high-pressure data for a clutch assessment.');
+  (q6.assessment || []).forEach(function (a) { parts.push(a.label + ': ' + a.evidence + '.'); });
+  return parts.join(' ');
 }
 
 // ─── Time-series analysis ────────────────────────────────────────────────────

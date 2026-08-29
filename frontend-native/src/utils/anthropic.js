@@ -1,47 +1,50 @@
 import { getSettings } from './settings';
 
 const SYSTEM_PROMPT = [
-  'You are an expert tennis performance analyst. You are given a structured JSON',
-  'object of match statistics computed from point-by-point charting data for one',
-  'player (the "subject") vs an opponent. The JSON covers: serve patterns by',
-  'scenario (deuce/ad, 1st/2nd serve, high-pressure, game-point), serve strengths',
-  'and weaknesses, baseline strengths/weaknesses (unforced errors & winners by',
-  'shot), net game, a per-4-game time-series with set markers, and clutch /',
-  'high-pressure performance.',
+  'You are an expert tennis performance analyst. Everything you are given below has',
+  'already been fully computed and verified from point-by-point match charting for',
+  'one player (the "subject") vs an opponent — pre-written diagnosis text,',
+  'recommendations, and short narrative summaries per section. Nothing is raw or',
+  'unprocessed.',
   '',
   'Strict rules:',
-  '1. Only draw a conclusion when the underlying numbers support it. Every',
-  '   structured field carries an `sufficient` flag and a sample size `n`. If',
-  '   `sufficient` is false or n is small, say "Insufficient data (n=…)" and do',
-  '   NOT guess. This is the most important rule.',
-  '2. Cite the numbers that justify each conclusion (percentages, counts, sample',
-  '   sizes). Be concrete, not generic.',
-  '3. Do NOT invent stats that are not in the JSON. Do NOT use coaching platitudes',
-  '   or filler. Every recommendation must trace to a measured weakness.',
-  '4. Write in clear prose for a player/coach audience. Use the subject player\'s',
-  '   name (from the `subject` field) and opponent\'s (from `opponent`).',
+  '1. Your ONLY job is to rephrase the given data into clear, natural prose for a',
+  '   player/coach audience. Do NOT calculate, estimate, derive, or introduce any',
+  '   number, percentage, or count that is not already present in the given data.',
+  '   This is the most important rule.',
+  '2. Every number you write must be copied exactly as given — do not round',
+  '   differently, recompute a percentage, or combine numbers into a new one.',
+  '3. Do NOT invent stats, claims, or conclusions beyond what is given. Do NOT use',
+  '   coaching platitudes or filler not grounded in the given data.',
+  '4. Use the subject player\'s name (from the `subject` field) and opponent\'s',
+  '   (from `opponent`).',
   '5. Format output as Markdown with ## headings per section.',
 ].join('\n');
+
+// Low temperature: both LLM modes now only rephrase pre-computed, correct data
+// (see synthesizeDiagnosis/writeFullReport below) — this is a literal rewriting
+// task, not creative writing, so we want the least sampling variance possible.
+const TEMPERATURE = 0.15;
 
 async function callProvider(userPrompt) {
   const settings = await getSettings();
   const provider = settings.aiProvider || 'anthropic';
-  
+
   let apiKey = '';
   let model = '';
-  
+
   if (provider === 'anthropic') {
     apiKey = settings.anthropicApiKey;
-    model = settings.anthropicModel || 'claude-fable-5';
+    model = settings.anthropicModel || 'claude-haiku-4-5';
   } else if (provider === 'openai') {
     apiKey = settings.openaiApiKey;
-    model = settings.openaiModel || 'gpt-5.6-sol';
+    model = settings.openaiModel || 'o4-mini';
   } else if (provider === 'gemini') {
     apiKey = settings.geminiApiKey;
-    model = settings.geminiModel || 'gemini-3.5-flash';
+    model = settings.geminiModel || 'gemini-3.1-flash-lite';
   } else if (provider === 'openrouter') {
     apiKey = settings.openrouterApiKey;
-    model = settings.openrouterModel || 'deepseek/deepseek-v4-pro';
+    model = settings.openrouterModel || 'google/gemma-4-31b-it';
   }
 
   if (!apiKey) {
@@ -61,6 +64,7 @@ async function callProvider(userPrompt) {
         body: JSON.stringify({
           model: model,
           max_tokens: 4096,
+          temperature: TEMPERATURE,
           system: SYSTEM_PROMPT,
           messages: [{ role: 'user', content: userPrompt }],
         }),
@@ -89,6 +93,11 @@ async function callProvider(userPrompt) {
       } else {
         requestBody.max_tokens = 4096;
       }
+      // Reasoning models (o-series) reject a custom temperature — only their
+      // default (1) is accepted, so skip it there.
+      if (!isReasoning) {
+        requestBody.temperature = TEMPERATURE;
+      }
 
       response = await fetch(endpoint, {
         method: 'POST',
@@ -107,7 +116,7 @@ async function callProvider(userPrompt) {
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
           systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-          generationConfig: { maxOutputTokens: 4096 }
+          generationConfig: { maxOutputTokens: 4096, temperature: TEMPERATURE }
         }),
       });
     }
@@ -149,56 +158,108 @@ async function callProvider(userPrompt) {
 }
 
 // Hybrid mode: structured Q1–Q6 are rendered deterministically by the app;
-// AI writes only the diagnosis (Q7) and recommendations (Q8).
+// AI rephrases the already-correct diagnosis (Q7) and recommendations (Q8).
+// Only the pre-computed Q7/Q8 data is sent — no raw counters — so the model
+// has nothing to (mis)calculate from; it can only reword what's given.
 export async function synthesizeDiagnosis(insights, apiKeyIgnored) {
   const prompt = [
-    'Write sections ## Why the subject won or lost (Q7) and ## Recommendations (Q8)',
-    'for the player below. The structured stats for Q1–Q6 are already shown to the',
-    'user separately, so focus only on Q7 (a data-grounded explanation of the',
-    'result — point balance, break-point conversion, serve dominance, error',
-    'management, clutch performance) and Q8 (specific training recommendations,',
-    'each tied to a measured weakness). Honor `sufficient` flags strictly.',
+    'Rephrase the pre-computed diagnosis and recommendations below into natural',
+    'prose, as ## Why the subject won or lost (Q7) and ## Recommendations (Q8).',
+    'Every number, label, and conclusion below has already been computed and',
+    'verified — your only job is to turn it into readable prose. Do not calculate,',
+    'estimate, or introduce any number that is not already present below.',
     '',
     'Subject:', insights.subject,
     'Opponent:', insights.opponent,
-    'Total points:', insights.totalPoints,
-    'Points won (subject-opponent):', `${insights.pointsWon.subject}-${insights.pointsWon.opponent}`,
     '',
-    'Structured insights JSON:',
+    'Q7 diagnosis (pre-computed):',
     '```json',
-    JSON.stringify(insights, null, 2),
+    JSON.stringify(insights.q7_diagnosis, null, 2),
+    '```',
+    '',
+    'Q8 recommendations (pre-computed):',
+    '```json',
+    JSON.stringify(insights.q8_recommendations, null, 2),
     '```',
   ].join('\n');
   return callProvider(prompt);
 }
 
-// LLM mode: AI writes the entire narrative report across all 8 questions.
+// LLM mode: AI writes the full narrative report, but — same as hybrid — only
+// rephrases pre-computed per-section prose (q1_narrative..q6_narrative) and
+// the Q7/Q8 data. No raw counters are ever sent, so there's nothing for the
+// model to recompute across any of the 8 sections.
 export async function writeFullReport(insights, apiKeyIgnored) {
   const prompt = [
-    'Write the full match analysis report for the player below, with these Markdown',
-    'sections in order:',
-    '## 1. Serve Patterns  (Q1 — patterns by deuce/ad, 1st/2nd, high-pressure,',
-    'game-point; cite dominant directions and %)',
-    '## 2. Serve Strengths & Weaknesses  (Q2)',
-    '## 3. Baseline Strengths & Weaknesses  (Q3 — forehand/backhand etc.)',
-    '## 4. Net Game  (Q4)',
-    '## 5. Momentum & Consistency  (Q5 — time-series, better/worse stretches)',
-    '## 6. Clutch Performance  (Q6 — high-pressure, break/game point conversion)',
-    '## 7. Why the Subject Won or Lost  (Q7)',
-    '## 8. Recommendations  (Q8 — training, tied to measured weaknesses)',
+    'Rephrase the pre-computed match analysis below into natural prose, as these',
+    'Markdown sections in order:',
+    '## 1. Serve Patterns',
+    '## 2. Serve Strengths & Weaknesses',
+    '## 3. Baseline Strengths & Weaknesses',
+    '## 4. Net Game',
+    '## 5. Momentum & Consistency',
+    '## 6. Clutch Performance',
+    '## 7. Why the Subject Won or Lost',
+    '## 8. Recommendations',
     '',
-    'Honor `sufficient` flags strictly: where a stat is insufficient, say so and',
-    'do not guess. Cite numbers. Be specific, not generic.',
+    'Every number, label, and conclusion below has already been computed and',
+    'verified — your only job is to turn each pre-computed section into readable',
+    'prose. Do not calculate, estimate, or introduce any number that is not',
+    'already present below.',
     '',
     'Subject:', insights.subject,
     'Opponent:', insights.opponent,
-    'Total points:', insights.totalPoints,
-    'Points won (subject-opponent):', `${insights.pointsWon.subject}-${insights.pointsWon.opponent}`,
     '',
-    'Structured insights JSON:',
+    '1. Serve patterns (pre-computed):', insights.q1_narrative,
+    '2. Serve strengths/weaknesses (pre-computed):', insights.q2_narrative,
+    '3. Baseline strengths/weaknesses (pre-computed):', insights.q3_narrative,
+    '4. Net game (pre-computed):', insights.q4_narrative,
+    '5. Momentum & consistency (pre-computed):', insights.q5_narrative,
+    '6. Clutch performance (pre-computed):', insights.q6_narrative,
+    '',
+    '7. Diagnosis (pre-computed):',
     '```json',
-    JSON.stringify(insights, null, 2),
+    JSON.stringify(insights.q7_diagnosis, null, 2),
+    '```',
+    '8. Recommendations (pre-computed):',
+    '```json',
+    JSON.stringify(insights.q8_recommendations, null, 2),
     '```',
   ].join('\n');
   return callProvider(prompt);
+}
+
+// ─── Numeric-citation validation ─────────────────────────────────────────────
+// Since both modes above now send only pre-computed data (no raw counters),
+// any number the model outputs should be traceable verbatim to what it was
+// given. This builds the exact source text sent for a mode, and checks every
+// "N of M" / "N/M" / "N%" citation in the LLM output appears in that source.
+export function buildSourceText(insights, mode) {
+  if (mode === 'llm') {
+    return [
+      insights.q1_narrative, insights.q2_narrative, insights.q3_narrative,
+      insights.q4_narrative, insights.q5_narrative, insights.q6_narrative,
+      JSON.stringify(insights.q7_diagnosis), JSON.stringify(insights.q8_recommendations),
+    ].join('\n');
+  }
+  return [
+    JSON.stringify(insights.q7_diagnosis), JSON.stringify(insights.q8_recommendations),
+  ].join('\n');
+}
+
+const CITATION_RE = /\d+(?:\.\d+)?\s*(?:of|\/)\s*\d+(?:\.\d+)?|\d+(?:\.\d+)?\s*%/g;
+
+function citationInSource(citation, sourceText) {
+  if (sourceText.indexOf(citation) !== -1) return true;
+  const ofMatch = citation.match(/^(\d+(?:\.\d+)?)\s*of\s*(\d+(?:\.\d+)?)$/);
+  if (ofMatch && sourceText.indexOf(`${ofMatch[1]}/${ofMatch[2]}`) !== -1) return true;
+  const slashMatch = citation.match(/^(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)$/);
+  if (slashMatch && sourceText.indexOf(`${slashMatch[1]} of ${slashMatch[2]}`) !== -1) return true;
+  return false;
+}
+
+// Returns true if every numeric citation in llmText traces back to sourceText.
+export function validateNumericCitations(llmText, sourceText) {
+  const citations = (llmText || '').match(CITATION_RE) || [];
+  return citations.every((c) => citationInSource(c.replace(/\s+/g, ' ').trim(), sourceText));
 }
